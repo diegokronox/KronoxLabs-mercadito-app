@@ -19,3 +19,4 @@ db.version(1).stores({
   // cuando no hay internet, todo espera aquí
   cola_sync: '++id, tipo, datos, fecha, intentos'
 })
+console.log('dexie funciona')

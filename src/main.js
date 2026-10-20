@@ -1,3 +1,4 @@
+import { db } from './db.js'
 import './style.css'
 import heroImg from './assets/hero.png'
 import javascriptLogo from './assets/javascript.svg'
