@@ -1,22 +1,12 @@
 import Dexie from 'dexie'
 
-// Crear la base de datos que va a vivir en el teléfono del cliente
-export const db = new Dexie('MercaditoDB')
+export const db = new Dexie('KronoxPOS')
 
-db.version(1).stores({
-  // Tabla de productos del inventario
-  // ++ significa que el id se genera automático
-  productos: '++id, nombre, precio, stock, categoria, caducidad',
-
-  // Tabla donde se guarda cada venta registrada
-  ventas: '++id, fecha, total, metodoPago',
-
-  // Tabla de cada producto dentro de una venta
-  // (una venta puede tener varios productos)
-  ventaItems: '++id, ventaId, productoId, cantidad, precioUnitario',
-
-  // Cola de operaciones pendientes de sincronizar
-  // cuando no hay internet, todo espera aquí
-  cola_sync: '++id, tipo, datos, fecha, intentos'
+db.version(2).stores({
+  productos: '++id, negocio, n, cat, price, cost, stock, expiry',
+  ventas: '++id, negocio, date, time, total, method, cashAmount, transferAmount, received, change, employee, shift, status',
+  facturas: '++id, negocio, date, supplier, invoice, total, lines',
+  incidencias: '++id, negocio, date, product, type, desc, status',
+  auditoria: '++id, negocio, date, action, detail, origin',
+  cola_sync: '++id, negocio, tipo, datos, fecha, intentos'
 })
-console.log('dexie funciona')

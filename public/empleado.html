@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KronoxPOS — Empleado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing: border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#F4F4F2;color:#0F0F0F}
+    #sync-status{padding:6px 14px;font-size:12px;font-weight:500;text-align:center}
+    .sync-ok{background:#ECDBD1;color:#D396B1}
+    .sync-pending{background:#FFFFFF;color:#D97706}
+    #app{padding:16px}
+    h1{font-size:18px;font-weight:600;margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <div id="sync-status" class="sync-ok">Sincronizado</div>
+  <div id="app">
+    <h1 id="negocio-nombre">Cargando...</h1>
+    <p id="estado">Iniciando base de datos...</p>
+  </div>
+
+  <script type="module">
+    import { getTenant, getRol } from '../src/auth.js'
+    
+    const negocio = getTenant()
+    const rol = getRol()
+    
+    document.getElementById('negocio-nombre').textContent = Negocio: ${negocio}
+    document.getElementById('estado').textContent = Rol: ${rol}
+  </script>
+</body>
+</html>

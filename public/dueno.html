@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KronoxPOS — Dueño</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing: border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#F4F4F2;color:#0F0F0F;display:flex;justify-content:center;align-items:center;min-height:100vh}
+    .pin-box{background:#FFF;padding:32px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.1);width:100%;max-width:320px;text-align:center}
+    .pin-box h2{font-size:20px;margin-bottom:8px}
+    .pin-box p{font-size:14px;color:#666;margin-bottom:24px}
+    .pin-input{width:100%;padding:12px;border:1px solid #D0D0CE;border-radius:10px;font-size:20px;text-align:center;letter-spacing:8px;outline:none;font-family:'Inter',sans-serif}
+    .pin-input:focus{border-color:#5B3FE4}
+    .pin-btn{width:100%;margin-top:12px;padding:12px;background:#5B3FE4;border:none;border-radius:10px;color:#FFF;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
+    .pin-error{color:#DC2626;font-size:12px;margin-top:8px;display:none}
+    #panel{display:none;padding:24px;background:#FFF;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.1);width:100%;max-width:400px}
+    #panel h1{font-size:20px;font-weight:600;margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <div class="pin-box" id="pin-screen">
+    <h2>Panel del dueño</h2>
+    <p id="pin-negocio">Cargando negocio...</p>
+    <input class="pin-input" id="pin-input" type="password" maxlength="4" placeholder="••••" oninput="if(this.value.length === 4) verificar()">
+    <button class="pin-btn" onclick="verificar()">Entrar</button>
+    <div class="pin-error" id="pin-error">PIN incorrecto</div>
+  </div>
+  
+  <div id="panel">
+    <h1 id="panel-titulo">Panel del dueño</h1>
+    <p id="panel-estado">Cargando datos...</p>
+  </div>
+
+  <script type="module">
+    import { getTenant, verificarPinDueno } from '../src/auth.js'
+    import { db } from '../src/db.js'
+
+    const negocio = getTenant()
+    document.getElementById('pin-negocio').textContent = negocio
+
+    window.verificar = function() {
+      const pin = document.getElementById('pin-input').value
+      if (verificarPinDueno(pin)) {
+        document.getElementById('pin-screen').style.display = 'none'
+        document.getElementById('panel').style.display = 'block'
+        document.getElementById('panel-titulo').textContent = 'Panel - ' + negocio
+        cargarDatos()
+      } else {
+        document.getElementById('pin-error').style.display = 'block'
+        document.getElementById('pin-input').value = ''
+      }
+    }
+
+    async function cargarDatos() {
+      const ventas = await db.ventas.where('negocio').equals(negocio).toArray()
+      document.getElementById('panel-estado').textContent = 'Ventas registradas hoy: ' + ventas.length
+    }
+  </script>
+</body>
+</html>
