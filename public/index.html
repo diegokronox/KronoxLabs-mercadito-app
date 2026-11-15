@@ -64,10 +64,13 @@ html,body{min-height:100%;padding-bottom:env(safe-area-inset-bottom);font-family
 
 <div class="modal-bg" id="closeModal"><div class="modal"><div class="modal-head"><h3>Cierre de caja</h3><button class="close" onclick="window.closeModal('closeModal')">✕</button></div><div class="modal-body" id="closeBody"></div><div class="modal-foot"><button class="btn ghost" onclick="window.closeModal('closeModal')">Cerrar</button><button class="btn primary" onclick="window.exportClose()">Exportar cierre TXT</button></div></div></div>
 
-<!-- =====================================================================
-     SCRIPT PRINCIPAL — sin type="module", todo inline
-     La lógica de sync con n8n está aislada: si falla, la app sigue funcionando
-     ===================================================================== -->
+<!-- ── PASO 5 SPRINT 3: URL del webhook de n8n ──
+     Cuando Hebert te mande la URL, reemplaza el valor de abajo.
+     Esta línea va ANTES del script principal para que esté disponible. -->
+<script>
+  window.FABIAN_SYNC_URL = ''  // ← pega aquí la URL que te mande Hebert
+</script>
+
 <script src="https://unpkg.com/dexie@3/dist/dexie.min.js"></script>
 <script>
 // ── BASE DE DATOS LOCAL (Dexie / IndexedDB) ───────────────────────────
@@ -85,10 +88,10 @@ db.version(1).stores({
 const NEGOCIO = 'fabianstylist';
 const PIN_ADMIN = '1234';
 function verificarPin(pin){ return pin === PIN_ADMIN; }
-function getTenant(){ return NEGOCIO; }
 
 // ── SYNC CON N8N (aislado — si falla, la app sigue) ──────────────────
-const WEBHOOK_URL = 'http://localhost:5678/webhook/sync-fabian';
+// Usa window.FABIAN_SYNC_URL si está configurada, si no usa localhost como fallback
+const WEBHOOK_URL = window.FABIAN_SYNC_URL || 'http://localhost:5678/webhook/sync-fabian';
 
 async function encolar(tipo, dato) {
   try {
@@ -111,7 +114,6 @@ async function intentarSync() {
       actualizarIndicador(true);
     }
   } catch(e) {
-    // n8n no disponible — modo offline, sin error visible al usuario
     actualizarIndicador(false);
     console.warn('Sync no disponible (n8n offline):', e.message);
   }
@@ -514,7 +516,6 @@ function renderAll(){
   $('purchaseDate').value = dateISO();
   buildNav(); fillSelects(); renderAll();
 
-  // Sync con n8n completamente aislado — si falla, la app sigue normal
   setTimeout(async () => {
     try { await intentarSync(); } catch(e) { console.warn('Sync ignorado:', e.message); }
   }, 2000);
