@@ -1,3 +1,4 @@
+import './style.css'
 import { db } from './db.js'
 import { NEGOCIO, PIN_ADMIN } from './auth.js'
 import { encolar, intentarSync, actualizarIndicador } from './sync.js'
