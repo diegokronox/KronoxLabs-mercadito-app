@@ -1,65 +1,65 @@
 import { db } from './db.js'
-import { getTenant } from './auth.js'
+import { NEGOCIO } from './auth.js'
 
-const WEBHOOK_URL = 'http://localhost:5678/webhook/sync-pos'
+// URL del webhook n8n — configura aqui cuando estes en produccion
+// Ejemplo: 'https://tudominio.com/webhook/sync-mercaito'
+export const WEBHOOK_URL = ''
 
-export async function encolar(tipo, datos) {
-  const negocio = getTenant()
-  await db.cola_sync.add({
-    negocio, tipo, datos,
-    fecha: new Date().toISOString(),
-    intentos: 0
-  })
-  await intentarSync()
+export async function encolar(tipo, dato) {
+  if (!WEBHOOK_URL) return
+  try {
+    await db.cola_sync.add({
+      negocio: NEGOCIO,
+      tipo,
+      dato: JSON.stringify(dato),
+      enviado: false,
+      fecha: new Date().toISOString()
+    })
+  } catch (e) {
+    console.warn('No se pudo encolar:', e)
+  }
 }
 
 export async function intentarSync() {
-  if (!navigator.onLine) {
-    actualizarIndicador()
+  if (!WEBHOOK_URL || !navigator.onLine) {
+    actualizarIndicador(false)
     return
   }
-  const negocio = getTenant()
-  const pendientes = await db.cola_sync.where('negocio').equals(negocio).toArray()
-
-  for (const op of pendientes) {
-    try {
-      const respuesta = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(op)
-      })
-      if (respuesta.ok) {
-        await db.cola_sync.delete(op.id)
-      }
-    } catch (error) {
-      await db.cola_sync.update(op.id, { intentos: op.intentos + 1 })
-      break 
+  try {
+    const pendientes = await db.cola_sync
+      .where({ negocio: NEGOCIO, enviado: false })
+      .toArray()
+    if (!pendientes.length) {
+      actualizarIndicador(true)
+      return
     }
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ negocio: NEGOCIO, registros: pendientes }),
+      signal: AbortSignal.timeout(6000)
+    })
+    if (res.ok) {
+      for (const p of pendientes) {
+        await db.cola_sync.update(p.id, { enviado: true })
+      }
+      actualizarIndicador(true)
+    }
+  } catch (e) {
+    actualizarIndicador(false)
+    console.warn('Sync no disponible:', e.message)
   }
-  actualizarIndicador()
 }
 
-export async function actualizarIndicador() {
-  const negocio = getTenant()
-  const pendientes = await db.cola_sync.where('negocio').equals(negocio).count()
-  
-  // Busca el circulito de sync en el HTML nuevo
-  const led = document.querySelector('.led')
-  const txt = document.querySelector('.sync span:last-child')
-  
+export function actualizarIndicador(conectado) {
+  const led = document.getElementById('syncLed')
+  const txt = document.getElementById('syncTxt')
   if (!led || !txt) return
-
-  if (pendientes === 0 && navigator.onLine) {
-    led.style.background = '#059669'
-    txt.textContent = 'Sincronizado'
-  } else if (pendientes > 0) {
-    led.style.background = '#d97706'
-    txt.textContent = pendientes + ' operaciones pendientes'
-  } else {
-    led.style.background = '#6b7280'
-    txt.textContent = 'Sin conexión — datos locales'
-  }
+  led.className = 'sync-led' + (conectado ? ' ok' : '')
+  txt.textContent = conectado
+    ? 'Sincronizado con servidor'
+    : WEBHOOK_URL ? 'Sin conexion — datos locales' : 'Modo local'
 }
 
-window.addEventListener('online', intentarSync)
-setInterval(() => { if (navigator.onLine) intentarSync() }, 30000)
+window.addEventListener('online',  () => intentarSync())
+window.addEventListener('offline', () => actualizarIndicador(false))
