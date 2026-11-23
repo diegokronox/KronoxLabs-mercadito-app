@@ -1,6 +1,6 @@
 {
-  "name": "Mercaito",
-  "short_name": "Mercaito",
+  "name": "FabianStylist Cafeteria",
+  "short_name": "FSCafeteria",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0F1623",
