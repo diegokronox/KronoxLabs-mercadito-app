@@ -4,7 +4,7 @@ import { NEGOCIO, PIN_ADMIN } from './auth.js'
 import { encolar, intentarSync, actualizarIndicador } from './sync.js'
 
 // ── CATEGORIAS ─────────────────────────────────────────────────────────
-const CATS = ['Alimentos','Bebidas','Lacteos','Carnicos','Aseo','Limpieza','Dulceria','Cafe','Bazar']
+const CATS = ['Alimentos','Bebidas','Lácteos','Cárnicos','Aseo','Limpieza','Dulcería','Café','Bazar']
 
 // ── DATOS SEMILLA ──────────────────────────────────────────────────────
 const SEED = [
@@ -15,7 +15,7 @@ const SEED = [
   {negocio:NEGOCIO,n:'Cerveza',cat:'Bebidas',price:2,cost:1.35,stock:3,expiry:'2027-01-01'},
   {negocio:NEGOCIO,n:'Agua mineral',cat:'Bebidas',price:1,cost:.55,stock:0,expiry:'2027-06-01'},
   {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lacteos',price:5,cost:3.8,stock:15,expiry:'2026-12-20'},
-  {negocio:NEGOCIO,n:'Jabon de bano',cat:'Aseo',price:1.8,cost:1.1,stock:22,expiry:'2028-01-01'},
+  {negocio:NEGOCIO,n:'Jabón de baño',cat:'Aseo',price:1.8,cost:1.1,stock:22,expiry:'2028-01-01'},
   {negocio:NEGOCIO,n:'Detergente',cat:'Limpieza',price:3.5,cost:2.4,stock:12,expiry:'2028-06-01'},
   {negocio:NEGOCIO,n:'Pasta de tomate',cat:'Alimentos',price:1.2,cost:.8,stock:40,expiry:'2026-11-01'},
 ]
@@ -27,7 +27,7 @@ const ADMIN_NAV = [
   ['purchases','Compras','<svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'],
   ['reports','Reportes','<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'],
   ['issues','Incidencias','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'],
-  ['audit','Auditoria','<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'],
+  ['audit','Auditoría','<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'],
 ]
 const EMP_NAV = [
   ['sale','Nueva venta','<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'],
@@ -36,7 +36,7 @@ const EMP_NAV = [
 ]
 const TITLES = {
   dashboard:'Resumen general', inventory:'Inventario', purchases:'Compras y facturas',
-  reports:'Reportes', issues:'Incidencias', audit:'Auditoria',
+  reports:'Reportes', issues:'Incidencias', audit:'Auditoría',
   sale:'Nueva venta', history:'Mis ventas'
 }
 
