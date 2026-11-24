@@ -14,7 +14,7 @@ const SEED = [
   {negocio:NEGOCIO,n:'Refresco',cat:'Bebidas',price:1.5,cost:1,stock:60,expiry:'2026-10-30'},
   {negocio:NEGOCIO,n:'Cerveza',cat:'Bebidas',price:2,cost:1.35,stock:3,expiry:'2027-01-01'},
   {negocio:NEGOCIO,n:'Agua mineral',cat:'Bebidas',price:1,cost:.55,stock:0,expiry:'2027-06-01'},
-  {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lacteos',price:5,cost:3.8,stock:15,expiry:'2026-12-20'},
+  {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lácteos',price:5,cost:3.8,stock:15,expiry:'2026-12-20'},
   {negocio:NEGOCIO,n:'Jabón de baño',cat:'Aseo',price:1.8,cost:1.1,stock:22,expiry:'2028-01-01'},
   {negocio:NEGOCIO,n:'Detergente',cat:'Limpieza',price:3.5,cost:2.4,stock:12,expiry:'2028-06-01'},
   {negocio:NEGOCIO,n:'Pasta de tomate',cat:'Alimentos',price:1.2,cost:.8,stock:40,expiry:'2026-11-01'},
@@ -547,7 +547,7 @@ function renderPurchaseDraft() {
         <button class="ico-btn del" style="margin-left:6px" onclick="draftLines.splice(${i},1);renderPurchaseDraft()">Quitar</button>
       </span>
       <b>${money(l.qty * l.cost)}</b>
-    </div>`).join('') || '<div class="empty" style="padding:16px">Anade articulos de la factura.</div>'
+    </div>`).join('') || '<div class="empty" style="padding:16px">Añade artículos de la factura.</div>'
   $('purchaseDraftTotal').textContent = money(draftLines.reduce((a,l) => a + l.qty * l.cost, 0))
 }
 
@@ -555,7 +555,7 @@ async function savePurchase() {
   const supplier = $('supplier').value.trim()
   const invoice  = $('invoice').value.trim()
   if (!supplier || !invoice || !draftLines.length) {
-    toast('Completa proveedor, factura y articulos', false); return
+    toast('Completa proveedor, factura y artículos', false); return
   }
   for (const l of draftLines) {
     const p = l.id
@@ -707,7 +707,7 @@ function renderReports() {
   const ranked = Object.entries(top).sort((a,b) => b[1]-a[1]).slice(0,6)
   $('rep-products').innerHTML = ranked.map((x,i) =>
     `<div class="report-row"><span>${i+1}. ${x[0]}</span><b>${x[1]} ud</b></div>`).join('')
-    || '<div class="empty">Sin ventas en este periodo.</div>'
+    || '<div class="empty">Sin ventas en este período.</div>'
   $('reportRows').innerHTML = ss.slice().reverse().map(s => `
     <tr>
       <td>${s.date}</td><td>${s.time}</td>
