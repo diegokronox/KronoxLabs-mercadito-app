@@ -209,7 +209,7 @@
     <div class="sidefoot">
       <div class="sync-pill">
         <div class="sync-led" id="syncLed"></div>
-        <span class="sync-txt" id="syncTxt">Verificando conexion...</span>
+        <span class="sync-txt" id="syncTxt">Verificando conexión...</span>
       </div>
     </div>
   </aside>
@@ -241,17 +241,17 @@
         </div>
         <div class="stats">
           <div class="stat s-green"><label>Ventas de hoy</label><strong class="val-green" id="a-total">CUP 0.00</strong><div class="hint">Total registrado</div></div>
-          <div class="stat s-blue"><label>Transacciones</label><strong class="val-blue" id="a-count">0</strong><div class="hint">Operaciones del dia</div></div>
+          <div class="stat s-blue"><label>Transacciones</label><strong class="val-blue" id="a-count">0</strong><div class="hint">Operaciones del día</div></div>
           <div class="stat"><label>Efectivo recibido</label><strong id="a-cash">CUP 0.00</strong><div class="hint">Cobros en efectivo</div></div>
           <div class="stat s-amber"><label>Transferencias</label><strong class="val-amber" id="a-transfer">CUP 0.00</strong><div class="hint">Cobros digitales</div></div>
         </div>
         <div class="grid2">
           <div class="card">
-            <div class="card-head"><div><h3>Ventas recientes</h3><p>Ultimas operaciones del dia</p></div><span class="badge purple">Hoy</span></div>
-            <div class="table-wrap"><table class="table"><thead><tr><th>Hora</th><th>Detalle</th><th>Metodo</th><th>Total</th></tr></thead><tbody id="recentSales"></tbody></table></div>
+            <div class="card-head"><div><h3>Ventas recientes</h3><p>Últimas operaciones del día</p></div><span class="badge purple">Hoy</span></div>
+            <div class="table-wrap"><table class="table"><thead><tr><th>Hora</th><th>Detalle</th><th>Método</th><th>Total</th></tr></thead><tbody id="recentSales"></tbody></table></div>
           </div>
           <div class="card">
-            <div class="card-head"><div><h3>Alertas de inventario</h3><p>Requieren atencion</p></div></div>
+            <div class="card-head"><div><h3>Alertas de inventario</h3><p>Requieren atención</p></div></div>
             <div class="card-body" id="alerts"></div>
           </div>
         </div>
@@ -284,7 +284,7 @@
         <div class="card">
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Producto</th><th>Categoria</th><th>Precio venta</th><th>Costo</th><th>Stock</th><th>Caducidad</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Producto</th><th>Categoría</th><th>Precio venta</th><th>Costo</th><th>Stock</th><th>Caducidad</th><th>Acciones</th></tr></thead>
               <tbody id="inventoryRows"></tbody>
             </table>
           </div>
@@ -330,7 +330,7 @@
         </div>
         <div class="grid2">
           <div class="card">
-            <div class="card-head"><h3>Ventas por metodo de pago</h3></div>
+            <div class="card-head"><h3>Ventas por método de pago</h3></div>
             <div class="card-body" id="rep-pay"></div>
           </div>
           <div class="card">
@@ -346,7 +346,7 @@
               Exportar CSV
             </button>
           </div>
-          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Hora</th><th>Productos</th><th>Metodo</th><th>Total</th></tr></thead><tbody id="reportRows"></tbody></table></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Hora</th><th>Productos</th><th>Método</th><th>Total</th></tr></thead><tbody id="reportRows"></tbody></table></div>
         </div>
       </section>
 
@@ -365,16 +365,16 @@
           <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Empleado</th><th>Venta</th><th>Motivo</th><th>Detalle</th></tr></thead><tbody id="correctionRows"></tbody></table></div>
         </div>
         <div class="card">
-          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Descripcion</th><th>Estado</th><th>Accion</th></tr></thead><tbody id="issueRows"></tbody></table></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Descripción</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="issueRows"></tbody></table></div>
         </div>
       </section>
 
       <!-- ADMIN: AUDITORIA -->
       <section class="page" id="admin-audit">
-        <div class="page-head"><div><h1>Movimientos y auditoria</h1><p>Registro completo de operaciones y responsables.</p></div></div>
-        <div class="notice">Cada evento registra usuario, fecha, hora y detalle de la operacion. Sincronizacion con servidor disponible cuando se configure la URL del webhook.</div>
+        <div class="page-head"><div><h1>Movimientos y auditoría</h1><p>Registro completo de operaciones y responsables.</p></div></div>
+        <div class="notice">Cada evento registra usuario, fecha, hora y detalle de la operación. Sincronización con servidor disponible cuando se configure la URL del webhook.</div>
         <div class="card">
-          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Accion</th><th>Detalle</th><th>Origen</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Acción</th><th>Detalle</th><th>Origen</th></tr></thead><tbody id="auditRows"></tbody></table></div>
         </div>
       </section>
 
@@ -386,7 +386,7 @@
         <div class="card" style="margin-bottom:14px">
           <div class="card-body form-row">
             <div><label class="field-label">Nombre del empleado</label><input class="field" id="employeeName" value="Empleado 1" placeholder="Tu nombre"></div>
-            <div><label class="field-label">Turno</label><select class="field" id="employeeShift"><option>Manana</option><option>Tarde</option><option>Noche</option><option>Turno completo</option></select></div>
+            <div><label class="field-label">Turno</label><select class="field" id="employeeShift"><option>Mañana</option><option>Tarde</option><option>Noche</option><option>Turno completo</option></select></div>
           </div>
         </div>
         <div class="sale-layout">
@@ -406,10 +406,10 @@
               <button class="btn ghost btn-sm" onclick="clearTicket()">Limpiar</button>
             </div>
             <div class="ticket-items" id="ticketItems">
-              <div class="ticket-empty">Selecciona productos del catalogo</div>
+              <div class="ticket-empty">Selecciona productos del catálogo</div>
             </div>
             <div class="pay-section">
-              <div class="pay-label">Metodo de pago</div>
+              <div class="pay-label">Método de pago</div>
               <div class="pay-opts">
                 <button class="pay-opt sel-cash" id="payOptCash" onclick="setPayMethod('cash')">
                   <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -458,7 +458,7 @@
         <div class="card">
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Hora</th><th>Empleado / turno</th><th>Productos</th><th>Metodo</th><th>Total</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Hora</th><th>Empleado / turno</th><th>Productos</th><th>Método</th><th>Total</th><th>Acción</th></tr></thead>
               <tbody id="employeeSales"></tbody>
             </table>
           </div>
@@ -467,7 +467,7 @@
 
       <!-- EMPLEADO: INCIDENCIAS -->
       <section class="page" id="employee-issues">
-        <div class="page-head"><div><h1>Reportar problema</h1><p>Comunica incidencias a administracion.</p></div></div>
+        <div class="page-head"><div><h1>Reportar problema</h1><p>Comunica incidencias a administración.</p></div></div>
         <div class="grid2">
           <div class="card">
             <div class="card-head"><h3>Nueva incidencia</h3></div>
