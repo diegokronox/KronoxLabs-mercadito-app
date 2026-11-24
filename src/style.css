@@ -22,7 +22,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:1}
 /* ── SIDEBAR ── */
 .sidebar{width:240px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;transition:left .22s}
 .brand{padding:20px 16px 18px;border-bottom:1px solid #1E2A3D;display:flex;align-items:center;gap:11px}
-.brand-mark{width:36px;height:36px;background:var(--accent);border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0}
+.brand-mark{width:44px;height:44px;background:#fff;border-radius:10px;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+.brand-logo-img{width:100%;height:100%;object-fit:contain;display:block}
 .brand-text strong{display:block;color:#fff;font-size:14px;font-weight:600;line-height:1.3}
 .brand-text small{font-size:11px;color:#4A5568}
 .nav{padding:10px 8px;display:flex;flex-direction:column;gap:2px;flex:1}
