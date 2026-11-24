@@ -266,7 +266,7 @@ async function saveProduct() {
 
 async function deleteProduct(id) {
   const p = products.find(x => x.id === id)
-  if (!confirm('Eliminar ' + p.n + ' del catalogo?')) return
+  if (!confirm('Eliminar ' + p.n + ' del catálogo?')) return
   await db.productos.delete(id)
   products = products.filter(x => x.id !== id)
   await registrarAudit('Producto eliminado', p.n)
@@ -374,7 +374,7 @@ function renderTicket() {
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>`).join('')
-    : '<div class="ticket-empty">Selecciona productos del catalogo</div>'
+    : '<div class="ticket-empty">Selecciona productos del catálogo</div>'
   $('ticketTotal').textContent = money(total)
   updateChange()
 }
@@ -421,7 +421,7 @@ function showCobroModal(sale) {
     `<div class="cobro-item-row"><span>${i.n} × ${i.qty}</span><span>${money(i.price * i.qty)}</span></div>`).join('')
   let grid = `
     <div class="cobro-box"><div class="cobro-box-label">Total cobrado</div><div class="cobro-box-val big">${money(sale.total)}</div></div>
-    <div class="cobro-box"><div class="cobro-box-label">Metodo</div><div class="cobro-box-val">${sale.method==='cash'?'Efectivo':sale.method==='transfer'?'Transferencia':'Mixto'}</div></div>`
+    <div class="cobro-box"><div class="cobro-box-label">Método</div><div class="cobro-box-val">${sale.method==='cash'?'Efectivo':sale.method==='transfer'?'Transferencia':'Mixto'}</div></div>`
   if (sale.cashAmount > 0) grid += `
     <div class="cobro-box"><div class="cobro-box-label">Efectivo recibido</div><div class="cobro-box-val">${money(sale.received)}</div></div>
     <div class="cobro-box"><div class="cobro-box-label">Vuelto</div><div class="cobro-box-val" style="color:var(--green)">${money(sale.change)}</div></div>`
@@ -461,7 +461,7 @@ async function submitIssue() {
   const issueId = await db.incidencias.add(issue); issue.id = issueId; issues.unshift(issue)
   $('issueDesc').value = ''
   await registrarAudit('Incidencia reportada', p?.n || 'Sin producto')
-  renderIssues(); renderMyIssues(); toast('Incidencia enviada a administracion')
+  renderIssues(); renderMyIssues(); toast('Incidencia enviada a administración')
 }
 
 function renderMyIssues() {
@@ -724,7 +724,7 @@ function download(content, name, type) {
 
 function exportReport() {
   const ss   = periodSales()
-  const rows = ['Fecha,Hora,Productos,Metodo,Total', ...ss.map(s =>
+  const rows = ['Fecha,Hora,Productos,Método,Total', ...ss.map(s =>
     [s.date,s.time,'"'+s.items.map(i=>i.n+' x'+i.qty).join('; ')+'"',s.method,s.total].join(','))]
   download(rows.join('\n'), 'reporte_ventas.csv', 'text/csv'); toast('Reporte exportado')
 }
@@ -793,7 +793,7 @@ function renderAll() {
 }
 
 // ── EXPONER FUNCIONES AL HTML ──────────────────────────────────────────
-// Necesario porque el HTML usa onclick= y el modulo tiene scope propio
+// Necesario porque el HTML usa onclick= y el módulo tiene scope propio
 Object.assign(window, {
   pinKey, openPinScreen, closePinScreen,
   toggleSidebar, closeSidebar,
