@@ -942,6 +942,7 @@ function renderAll() {
     if (currentPage==='reports')    renderReports()
     if (currentPage==='issues')     renderIssues()
     if (currentPage==='audit')      renderAudit()
+    if (currentPage==='empleados')  renderEmpleados()
   } else {
     if (currentPage==='sale')    { renderSaleCats(); renderSaleProducts(); renderTicket() }
     if (currentPage==='history')   renderEmployeeHistory()
