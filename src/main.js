@@ -386,7 +386,7 @@ async function checkout() {
   const cashDue  = Number((total - transfer).toFixed(2))
   const received = Number($('received')?.value || 0)
   if (transfer > total + .001) { toast('La transferencia no puede superar el total', false); return }
-  if (cashDue > 0 && received < cashDue) { toast('El efectivo no cubre la parte pendiente', false); return }
+  if (payMethod !== 'transfer' && cashDue > 0.001 && received < cashDue) { toast('El efectivo no cubre la parte pendiente', false); return }
   for (const it of cart) {
     const p = products.find(x => x.id === it.id)
     if (!p || p.stock < it.qty) { toast('Stock insuficiente: ' + it.n, false); return }
