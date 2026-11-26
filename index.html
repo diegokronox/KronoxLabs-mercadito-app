@@ -14,11 +14,91 @@
 <body>
 
 <!-- PIN SCREEN -->
-<div class="pin-screen" id="pinScreen">
+<!-- PANTALLA DE SELECCIÓN DE ROL -->
+<div class="pin-screen" id="roleScreen">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title">Mercaito</div>
+    <div class="pin-sub">¿Cómo deseas entrar?</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px;width:100%">
+      <button class="btn primary full" onclick="showEmployeeList()">👤 Soy empleado</button>
+      <button class="btn full" style="background:var(--surface2)" onclick="showAdminPin()">🔐 Administrador</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN SCREEN ADMIN -->
+<div class="pin-screen" id="pinScreen" style="display:none">
   <div class="pin-box">
     <div class="pin-logo">M</div>
     <div class="pin-title">Panel administrador</div>
     <div class="pin-sub">Ingresa tu PIN para continuar</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key del-key" onclick="pinKey('del')">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del-key" onclick="pinKey('ok')">OK</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="pin-cancel" onclick="showRoleScreen()">← Volver</button>
+  </div>
+</div>
+
+<!-- PANTALLA DE SELECCIÓN DE EMPLEADO -->
+<div class="pin-screen" id="employeeListScreen" style="display:none">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title">¿Quién eres?</div>
+    <div class="pin-sub">Selecciona tu nombre</div>
+    <div id="employeeListItems" style="width:100%;margin-top:16px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto"></div>
+    <button class="pin-cancel" onclick="showRoleScreen()">← Volver</button>
+  </div>
+</div>
+
+<!-- PIN SCREEN EMPLEADO -->
+<div class="pin-screen" id="employeePinScreen" style="display:none">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title" id="empPinTitle">Empleado</div>
+    <div class="pin-sub">Ingresa tu PIN</div>
+    <div class="pin-dots" id="empPinDots">
+      <div class="pin-dot" id="epd0"></div>
+      <div class="pin-dot" id="epd1"></div>
+      <div class="pin-dot" id="epd2"></div>
+      <div class="pin-dot" id="epd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="empPinKey('1')">1</button>
+      <button class="pin-key" onclick="empPinKey('2')">2</button>
+      <button class="pin-key" onclick="empPinKey('3')">3</button>
+      <button class="pin-key" onclick="empPinKey('4')">4</button>
+      <button class="pin-key" onclick="empPinKey('5')">5</button>
+      <button class="pin-key" onclick="empPinKey('6')">6</button>
+      <button class="pin-key" onclick="empPinKey('7')">7</button>
+      <button class="pin-key" onclick="empPinKey('8')">8</button>
+      <button class="pin-key" onclick="empPinKey('9')">9</button>
+      <button class="pin-key del-key" onclick="empPinKey('del')">⌫</button>
+      <button class="pin-key" onclick="empPinKey('0')">0</button>
+      <button class="pin-key del-key" onclick="empPinKey('ok')">OK</button>
+    </div>
+    <div class="pin-error" id="empPinError"></div>
+    <button class="pin-cancel" onclick="showEmployeeList()">← Volver</button>
+  </div>
+</div>
     <div class="pin-dots" id="pinDots">
       <div class="pin-dot" id="pd0"></div>
       <div class="pin-dot" id="pd1"></div>
