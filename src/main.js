@@ -392,7 +392,7 @@ async function checkout() {
     if (!p || p.stock < it.qty) { toast('Stock insuficiente: ' + it.n, false); return }
   }
   const change = Number((received - cashDue).toFixed(2))
-  const method = transfer > 0 && cashDue > 0 ? 'mixed' : transfer > 0 ? 'transfer' : 'cash'
+  const method = payMethod === 'transfer' ? 'transfer' : (transfer > 0 && cashDue > 0 ? 'mixed' : 'cash')
   const sale = {
     negocio:NEGOCIO, date:dateISO(), time:nowTime(),
     items: cart.map(x => ({...x})), total, method,
