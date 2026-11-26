@@ -595,7 +595,24 @@
           </div>
         </div>
       </section>
-
+      
+      <!-- MODAL: CIERRE DEL DÍA -->
+      <div class="modal-bg" id="cierreDiaModal">
+        <div class="modal">
+          <div class="modal-head">
+            <h3>Cierre del día</h3>
+            <button class="modal-close" onclick="closeModal('cierreDiaModal')">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="modal-body" id="cierreDiaBody"></div>
+          <div class="modal-foot" id="cierreDiaFoot">
+            <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
+            <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>
+          </div>
+        </div>
+      </div>
+      
       <!-- EMPLEADO: INCIDENCIAS -->
       <section class="page" id="employee-issues">
         <div class="page-head"><div><h1>Reportar problema</h1><p>Comunica incidencias a administración.</p></div></div>
