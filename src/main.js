@@ -223,7 +223,7 @@ function renderInventory() {
 function fillSelects() {
   const opts = CATS.map(c => `<option>${c}</option>`).join('')
   $('prodCat').innerHTML       = opts
-  $('adminCat').innerHTML      = '<option value="">Todas las categorias</option>' + opts
+  $('adminCat').innerHTML      = '<option value="">Todas las categorías</option>' + opts
   $('issueProduct').innerHTML  = '<option value="">Producto no especificado</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
   $('purchaseProduct').innerHTML  = '<option value="">Selecciona producto existente</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
   $('purchaseCategory').innerHTML = opts
