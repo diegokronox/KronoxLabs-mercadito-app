@@ -846,6 +846,92 @@ function renderAudit() {
     </tr>`).join('') || '<tr><td colspan="4" class="empty">Sin movimientos registrados.</td></tr>'
 }
 
+// ── EMPLEADOS ──────────────────────────────────────────────────────────
+function openEmpleadoModal(id = null) {
+  $('empleadoId').value = id || ''
+  $('empleadoNombre').value = ''
+  $('empleadoTelefono').value = ''
+  $('empleadoFechaInicio').value = ''
+  $('empleadoPin').value = ''
+  $('empleadoModalTitle').textContent = id ? 'Editar empleado' : 'Nuevo empleado'
+  if (id) {
+    db.empleados.get(id).then(e => {
+      if (!e) return
+      $('empleadoNombre').value = e.nombre
+      $('empleadoTelefono').value = e.telefono || ''
+      $('empleadoFechaInicio').value = e.fechaInicio || ''
+      $('empleadoPin').value = e.pin
+    })
+  }
+  openModal('empleadoModal')
+}
+
+async function saveEmpleado() {
+  const nombre = $('empleadoNombre').value.trim()
+  const pin    = String($('empleadoPin').value).trim()
+  if (!nombre)           { toast('El nombre es obligatorio', false); return }
+  if (!/^\d{4}$/.test(pin)) { toast('El PIN debe ser exactamente 4 dígitos', false); return }
+  const id = $('empleadoId').value
+  const data = {
+    negocio: NEGOCIO,
+    nombre,
+    telefono:    $('empleadoTelefono').value.trim(),
+    fechaInicio: $('empleadoFechaInicio').value,
+    pin,
+    activo: 1
+  }
+  if (id) {
+    await db.empleados.update(Number(id), data)
+    await registrarAudit('Empleado editado', nombre)
+    toast('Empleado actualizado')
+  } else {
+    await db.empleados.add(data)
+    await registrarAudit('Empleado creado', nombre)
+    toast('Empleado creado')
+  }
+  closeModal('empleadoModal')
+  renderEmpleados()
+}
+
+async function toggleEmpleado(id) {
+  const e = await db.empleados.get(id)
+  if (!e) return
+  const nuevoEstado = e.activo ? 0 : 1
+  await db.empleados.update(id, { activo: nuevoEstado })
+  await registrarAudit(nuevoEstado ? 'Empleado reactivado' : 'Empleado desactivado', e.nombre)
+  toast(nuevoEstado ? e.nombre + ' reactivado' : e.nombre + ' desactivado')
+  renderEmpleados()
+}
+
+async function deleteEmpleado(id) {
+  const e = await db.empleados.get(id)
+  if (!e) return
+  if (!confirm('¿Eliminar a ' + e.nombre + '? Sus ventas y cierres históricos se conservan.')) return
+  await db.empleados.delete(id)
+  await registrarAudit('Empleado eliminado', e.nombre)
+  toast('Empleado eliminado')
+  renderEmpleados()
+}
+
+async function renderEmpleados() {
+  const lista = await db.empleados.where({ negocio: NEGOCIO }).toArray()
+  $('empleadosRows').innerHTML = lista.length
+    ? lista.map(e => `
+        <tr>
+          <td class="td-strong">${e.nombre}</td>
+          <td>${e.telefono || '—'}</td>
+          <td>${e.fechaInicio || '—'}</td>
+          <td><code>${e.pin}</code></td>
+          <td><span class="badge ${e.activo ? 'badge-green' : 'badge-red'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
+          <td>
+            <button class="btn-sm" onclick="openEmpleadoModal(${e.id})">Editar</button>
+            <button class="btn-sm" onclick="toggleEmpleado(${e.id})">${e.activo ? 'Desactivar' : 'Reactivar'}</button>
+            <button class="btn-sm danger" onclick="deleteEmpleado(${e.id})">Eliminar</button>
+          </td>
+        </tr>`).join('')
+    : '<tr><td colspan="6" class="empty">No hay empleados registrados.</td></tr>'
+}
+
 // ── RENDER GENERAL ─────────────────────────────────────────────────────
 function renderAll() {
   fillSelects()
