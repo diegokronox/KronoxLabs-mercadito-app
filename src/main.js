@@ -966,6 +966,7 @@ Object.assign(window, {
   openPurchase, addPurchaseLine, suggestPurchasePrice, savePurchase,
   renderInventory, renderReports, renderIssues,
   openClose, calcDifference, exportClose, exportReport,
+  openEmpleadoModal, saveEmpleado, toggleEmpleado, deleteEmpleado, renderEmpleados,
 })
 
 // ── ARRANQUE ───────────────────────────────────────────────────────────
