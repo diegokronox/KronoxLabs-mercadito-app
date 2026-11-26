@@ -28,6 +28,7 @@ const ADMIN_NAV = [
   ['reports','Reportes','<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'],
   ['issues','Incidencias','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'],
   ['audit','Auditoría','<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'],
+  ['empleados','Empleados','<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'],
 ]
 const EMP_NAV = [
   ['sale','Nueva venta','<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'],
@@ -37,7 +38,7 @@ const EMP_NAV = [
 const TITLES = {
   dashboard:'Resumen general', inventory:'Inventario', purchases:'Compras y facturas',
   reports:'Reportes', issues:'Incidencias', audit:'Auditoría',
-  sale:'Nueva venta', history:'Mis ventas'
+  sale:'Nueva venta', history:'Mis ventas', empleados:'Empleados'
 }
 
 // ── ESTADO GLOBAL ──────────────────────────────────────────────────────
