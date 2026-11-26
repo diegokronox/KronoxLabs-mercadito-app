@@ -1,6 +1,6 @@
 import './style.css'
 import { db } from './db.js'
-import { NEGOCIO, PIN_ADMIN } from './auth.js'
+import { NEGOCIO, PIN_ADMIN, loginEmployee, getEmployee, logout } from './auth.js'
 import { encolar, intentarSync, actualizarIndicador } from './sync.js'
 
 // ── CATEGORIAS ─────────────────────────────────────────────────────────
@@ -90,16 +90,51 @@ function openModal(id)  { $(id).classList.add('open') }
 function closeModal(id) { $(id).classList.remove('open') }
 
 // ── PIN ────────────────────────────────────────────────────────────────
-function openPinScreen() {
+let empPinBuffer = ''
+let selectedEmployeeId = null
+
+function showRoleScreen() {
+  $('roleScreen').classList.add('open')
+  $('pinScreen').classList.remove('open')
+  $('employeeListScreen').classList.remove('open')
+  $('employeePinScreen').classList.remove('open')
+}
+
+function showAdminPin() {
   pinBuffer = ''; updatePinDots()
   $('pinError').textContent = ''
+  $('roleScreen').classList.remove('open')
   $('pinScreen').classList.add('open')
 }
-function closePinScreen() { $('pinScreen').classList.remove('open') }
+
+async function showEmployeeList() {
+  const empleados = await db.empleados.where({ negocio: NEGOCIO, activo: 1 }).toArray()
+  $('employeeListItems').innerHTML = empleados.length
+    ? empleados.map(e => `
+        <button class="btn full" style="background:var(--surface2);justify-content:flex-start;gap:10px"
+          onclick="showEmployeePin(${e.id}, '${e.nombre}')">
+          👤 ${e.nombre}
+        </button>`).join('')
+    : '<p style="color:var(--muted);text-align:center;font-size:14px">No hay empleados registrados.<br>Pide al administrador que te agregue.</p>'
+  $('roleScreen').classList.remove('open')
+  $('employeeListScreen').classList.add('open')
+}
+
+function showEmployeePin(id, nombre) {
+  selectedEmployeeId = id
+  empPinBuffer = ''; updateEmpPinDots()
+  $('empPinTitle').textContent = nombre
+  $('empPinError').textContent = ''
+  $('employeeListScreen').classList.remove('open')
+  $('employeePinScreen').classList.add('open')
+}
+
+function openPinScreen() { showAdminPin() }
+function closePinScreen() { showRoleScreen() }
 
 function pinKey(k) {
-  if (k === 'del')      { pinBuffer = pinBuffer.slice(0, -1) }
-  else if (k === 'ok')  { checkPin(); return }
+  if (k === 'del')     { pinBuffer = pinBuffer.slice(0, -1) }
+  else if (k === 'ok') { checkPin(); return }
   else if (pinBuffer.length < 4) { pinBuffer += k }
   updatePinDots()
   if (pinBuffer.length === 4) setTimeout(checkPin, 120)
@@ -111,11 +146,42 @@ function updatePinDots() {
 
 function checkPin() {
   if (pinBuffer === PIN_ADMIN) {
-    closePinScreen(); activateAdmin()
+    showRoleScreen(); activateAdmin()
   } else {
     $('pinError').textContent = 'PIN incorrecto. Intenta de nuevo.'
     pinBuffer = ''; updatePinDots()
-    const box = document.querySelector('.pin-box')
+    const box = $('pinScreen').querySelector('.pin-box')
+    box.style.animation = 'none'
+    setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
+  }
+}
+
+function empPinKey(k) {
+  if (k === 'del')     { empPinBuffer = empPinBuffer.slice(0, -1) }
+  else if (k === 'ok') { checkEmpPin(); return }
+  else if (empPinBuffer.length < 4) { empPinBuffer += k }
+  updateEmpPinDots()
+  if (empPinBuffer.length === 4) setTimeout(checkEmpPin, 120)
+}
+
+function updateEmpPinDots() {
+  for (let i = 0; i < 4; i++) $('epd' + i).classList.toggle('filled', i < empPinBuffer.length)
+}
+
+async function checkEmpPin() {
+  const ok = await loginEmployee(selectedEmployeeId, empPinBuffer)
+  if (ok) {
+    $('employeePinScreen').classList.remove('open')
+    const emp = getEmployee()
+    activateEmployee(emp)
+  } else {
+    $('empPinError').textContent = 'PIN incorrecto. Intenta de nuevo.'
+    empPinBuffer = ''; updateEmpPinDots()
+    const box = $('employeePinScreen').querySelector('.pin-box')
+    box.style.animation = 'none'
+    setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
+  }
+}
     box.style.animation = 'none'
     setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
   }
@@ -131,14 +197,18 @@ function activateAdmin() {
   toast('Bienvenido, administrador')
 }
 
-function switchToEmployee() {
+function activateEmployee(emp) {
   role = 'employee'; currentPage = 'sale'
-  $('roleTag').textContent = 'Empleado'
+  $('roleTag').textContent = emp.nombre
   $('roleTag').classList.add('emp')
   $('adminEntry').classList.add('visible')
   buildNav(); showPage('sale')
+  toast('Bienvenido, ' + emp.nombre)
 }
 
+function switchToEmployee() {
+  showRoleScreen()
+}
 // ── NAVEGACION ─────────────────────────────────────────────────────────
 function buildNav() {
   const list = role === 'admin' ? ADMIN_NAV : EMP_NAV
@@ -796,6 +866,8 @@ function renderAll() {
 // Necesario porque el HTML usa onclick= y el módulo tiene scope propio
 Object.assign(window, {
   pinKey, openPinScreen, closePinScreen,
+  showRoleScreen, showAdminPin, showEmployeeList, showEmployeePin,
+  empPinKey,
   toggleSidebar, closeSidebar,
   openModal, closeModal,
   showPage, switchToEmployee,
