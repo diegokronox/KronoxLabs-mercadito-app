@@ -457,7 +457,58 @@
           <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Acción</th><th>Detalle</th><th>Origen</th></tr></thead><tbody id="auditRows"></tbody></table></div>
         </div>
       </section>
+      
+      <!-- ADMIN: EMPLEADOS -->
+      <section class="page" id="admin-empleados">
+        <div class="page-head">
+          <div><h1>Empleados</h1><p>Gestión de empleados y accesos.</p></div>
+          <button class="btn primary" onclick="openEmpleadoModal()">+ Nuevo empleado</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha inicio</th><th>PIN</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="empleadosRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
+      <!-- MODAL: EMPLEADO -->
+      <div class="modal-bg" id="empleadoModal">
+        <div class="modal">
+          <div class="modal-head">
+            <h3 id="empleadoModalTitle">Nuevo empleado</h3>
+            <button class="modal-close" onclick="closeModal('empleadoModal')">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="empleadoId">
+            <div class="field-group">
+              <label class="field-label">Nombre completo</label>
+              <input class="field" id="empleadoNombre" type="text" placeholder="Ej: María García">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Teléfono</label>
+              <input class="field" id="empleadoTelefono" type="tel" placeholder="Ej: 52001234">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Fecha de inicio</label>
+              <input class="field" id="empleadoFechaInicio" type="date">
+            </div>
+            <div class="field-group">
+              <label class="field-label">PIN (4 dígitos)</label>
+              <input class="field" id="empleadoPin" type="number" placeholder="Ej: 5678" maxlength="4">
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="closeModal('empleadoModal')">Cancelar</button>
+            <button class="btn primary" onclick="saveEmpleado()">Guardar</button>
+          </div>
+        </div>
+      </div>
+      
       <!-- EMPLEADO: VENTA -->
       <section class="page active" id="employee-sale">
         <div class="page-head">
