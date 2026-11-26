@@ -800,28 +800,86 @@ function exportReport() {
   download(rows.join('\n'), 'reporte_ventas.csv', 'text/csv'); toast('Reporte exportado')
 }
 
-// ── CIERRE DE CAJA ─────────────────────────────────────────────────────
-function openClose() {
-  const ss       = todaySales(), total = sum(ss)
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  $('closeBody').innerHTML = `
-    <div class="stats" style="grid-template-columns:1fr 1fr">
-      <div class="stat"><label>Total vendido</label><strong>${money(total)}</strong></div>
-      <div class="stat"><label>Transacciones</label><strong>${ss.length}</strong></div>
-      <div class="stat s-green"><label>Efectivo esperado</label><strong>${money(cash)}</strong></div>
-      <div class="stat s-blue"><label>Transferencias</label><strong>${money(transfer)}</strong></div>
-    </div>
-    <div class="form-group" style="margin-top:14px">
-      <label class="field-label">Efectivo contado fisicamente (CUP)</label>
-      <input class="field" id="cashCount" type="number" min="0" step=".01" placeholder="Introduce el efectivo contado" oninput="calcDifference(${cash})">
-    </div>
-    <div class="report-row"><span>Diferencia de caja</span><b id="cashDiff">—</b></div>`
-  openModal('closeModal')
+// ── CIERRE DEL DÍA ─────────────────────────────────────────────────────
+function calcSalary(total) {
+  if (total < 30000) return 1000
+  return 1000 + Math.floor((total - 30000) / 10000) * 500
 }
 
+async function openCierreDia() {
+  const emp = getEmployee()
+  if (!emp) { toast('No hay sesión de empleado activa', false); return }
+  const hoy = dateISO()
+  const cierreExistente = await db.cierres.where({ negocio: NEGOCIO, empleadoId: emp.id, fecha: hoy }).first()
+  if (cierreExistente) {
+    $('cierreDiaBody').innerHTML = `
+      <div style="text-align:center;padding:16px">
+        <div class="check-circle" style="margin:0 auto 12px"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <h3 style="margin-bottom:8px">Ya cerraste tu día</h3>
+        <p style="color:var(--muted)">Fecha: ${hoy}</p>
+        <div class="stats" style="margin-top:16px;grid-template-columns:1fr 1fr">
+          <div class="stat s-green"><label>Total vendido</label><strong>${money(cierreExistente.totalVentas)}</strong></div>
+          <div class="stat s-blue"><label>Tu salario</label><strong>${money(cierreExistente.salario)} CUP</strong></div>
+        </div>
+      </div>`
+    $('cierreDiaFoot').innerHTML = `<button class="btn primary full" onclick="closeModal('cierreDiaModal')">Cerrar</button>`
+    openModal('cierreDiaModal')
+    return
+  }
+  const ss       = todaySales().filter(s => s.empleadoId === emp.id)
+  const total    = sum(ss)
+  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
+  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
+  const salario  = calcSalary(total)
+  $('cierreDiaBody').innerHTML = `
+    <div class="stats" style="grid-template-columns:1fr 1fr">
+      <div class="stat"><label>Ventas realizadas</label><strong>${ss.length}</strong></div>
+      <div class="stat"><label>Total vendido</label><strong>${money(total)}</strong></div>
+      <div class="stat s-green"><label>Efectivo</label><strong>${money(cash)}</strong></div>
+      <div class="stat s-blue"><label>Transferencias</label><strong>${money(transfer)}</strong></div>
+    </div>
+    <div style="margin-top:16px;padding:16px;background:var(--surface2);border-radius:12px;text-align:center">
+      <p style="color:var(--muted);margin-bottom:4px;font-size:13px">Tu salario de hoy</p>
+      <strong style="font-size:28px;color:var(--green)">${money(salario)} CUP</strong>
+      <p style="color:var(--muted);font-size:12px;margin-top:4px">Basado en ${money(total)} vendidos</p>
+    </div>`
+  $('cierreDiaFoot').innerHTML = `
+    <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
+    <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>`
+  openModal('cierreDiaModal')
+}
+
+async function confirmarCierreDia() {
+  const emp = getEmployee()
+  if (!emp) return
+  const hoy      = dateISO()
+  const ss       = todaySales().filter(s => s.empleadoId === emp.id)
+  const total    = sum(ss)
+  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
+  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
+  const salario  = calcSalary(total)
+  await db.cierres.add({
+    negocio:        NEGOCIO,
+    empleadoId:     emp.id,
+    empleadoNombre: emp.nombre,
+    fecha:          hoy,
+    totalVentas:    total,
+    cantidadVentas: ss.length,
+    salario,
+    desglose:       { cash, transfer },
+    timestamp:      Date.now()
+  })
+  await registrarAudit('Cierre de día', `${emp.nombre} · Ventas: ${money(total)} · Salario: ${money(salario)} CUP`)
+  encolar({ tipo: 'cierre_dia', empleadoId: emp.id, empleadoNombre: emp.nombre, fecha: hoy, totalVentas: total, salario, desglose: { cash, transfer } })
+  closeModal('cierreDiaModal')
+  toast('Cierre registrado — Salario: ' + money(salario) + ' CUP')
+  renderAll()
+}
+
+function openClose() { openCierreDia() }
+
 function calcDifference(expected) {
-  const v = $('cashCount').value; if (v === '') { $('cashDiff').textContent = '—'; return }
+  const v = $('cashCount')?.value; if (!v) return
   const d = Number(v) - expected
   $('cashDiff').textContent = money(d)
   $('cashDiff').style.color = Math.abs(d) < .005 ? 'var(--green)' : 'var(--red)'
@@ -831,9 +889,7 @@ function exportClose() {
   const ss       = todaySales(), total = sum(ss)
   const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
   const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const count    = $('cashCount')?.value || ''
-  const diff     = count === '' ? 'No informado' : money(Number(count) - cash)
-  const txt = `CIERRE DE CAJA\nFecha: ${dateISO()}\nVentas: ${money(total)}\nEfectivo esperado: ${money(cash)}\nTransferencias: ${money(transfer)}\nEfectivo contado: ${count===''?'No informado':money(count)}\nDiferencia: ${diff}\nTransacciones: ${ss.length}\n`
+  const txt = `CIERRE DE CAJA\nFecha: ${dateISO()}\nVentas: ${money(total)}\nEfectivo: ${money(cash)}\nTransferencias: ${money(transfer)}\nTransacciones: ${ss.length}\n`
   download(txt, 'cierre_' + dateISO() + '.txt', 'text/plain'); toast('Cierre exportado')
 }
 
@@ -968,6 +1024,7 @@ Object.assign(window, {
   renderInventory, renderReports, renderIssues,
   openClose, calcDifference, exportClose, exportReport,
   openEmpleadoModal, saveEmpleado, toggleEmpleado, deleteEmpleado, renderEmpleados,
+  openCierreDia, confirmarCierreDia,
 })
 
 // ── ARRANQUE ───────────────────────────────────────────────────────────
