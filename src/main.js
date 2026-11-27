@@ -524,6 +524,42 @@ function renderEmployeeHistory() {
     </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin ventas hoy.</td></tr>'
 }
 
+async function renderMisSalarios() {
+  const emp = getEmployee()
+  if (!emp) return
+  const p   = $('salarioPeriod')?.value || 'month'
+  const now = new Date()
+  const all = await db.cierres.where({ negocio: NEGOCIO, empleadoId: emp.id }).toArray()
+  const filtered = all.filter(c => {
+    const d = new Date(c.fecha + 'T12:00:00')
+    if (p === 'all') return true
+    if (p === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    const q = Math.floor(now.getMonth() / 3)
+    return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear()
+  }).sort((a, b) => b.fecha.localeCompare(a.fecha))
+
+  const totalSalario = filtered.reduce((a, c) => a + c.salario, 0)
+  const totalVentas  = filtered.reduce((a, c) => a + c.totalVentas, 0)
+  const maxSalario   = filtered.length ? Math.max(...filtered.map(c => c.salario)) : 0
+
+  $('sal-total').textContent  = money(totalSalario)
+  $('sal-dias').textContent   = filtered.length
+  $('sal-max').textContent    = money(maxSalario)
+  $('sal-ventas').textContent = money(totalVentas)
+
+  $('salariosRows').innerHTML = filtered.length
+    ? filtered.map(c => `
+        <tr>
+          <td class="td-muted">${c.fecha}</td>
+          <td>${c.cantidadVentas}</td>
+          <td class="td-strong">${money(c.totalVentas)}</td>
+          <td>${money(c.desglose?.cash || 0)}</td>
+          <td>${money(c.desglose?.transfer || 0)}</td>
+          <td class="td-green"><strong>${money(c.salario)}</strong></td>
+        </tr>`).join('')
+    : '<tr><td colspan="6" class="empty">Sin cierres en este período.</td></tr>'
+}
+
 // ── INCIDENCIAS ────────────────────────────────────────────────────────
 async function submitIssue() {
   const id   = Number($('issueProduct').value)
