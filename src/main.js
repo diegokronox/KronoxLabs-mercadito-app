@@ -1064,6 +1064,7 @@ Object.assign(window, {
   openClose, calcDifference, exportClose, exportReport,
   openEmpleadoModal, saveEmpleado, toggleEmpleado, deleteEmpleado, renderEmpleados,
   openCierreDia, confirmarCierreDia,
+  renderMisSalarios,
 })
 
 // ── ARRANQUE ───────────────────────────────────────────────────────────
