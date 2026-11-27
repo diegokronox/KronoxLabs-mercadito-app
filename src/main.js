@@ -464,12 +464,14 @@ async function checkout() {
   }
   const change = Number((received - cashDue).toFixed(2))
   const method = payMethod === 'transfer' ? 'transfer' : (transfer > 0 && cashDue > 0 ? 'mixed' : 'cash')
+    const emp = getEmployee()
   const sale = {
     negocio:NEGOCIO, date:dateISO(), time:nowTime(),
     items: cart.map(x => ({...x})), total, method,
     cashAmount:cashDue, transferAmount:transfer, received, change,
-    employee: ($('employeeName').value.trim() || 'Empleado 1'),
-    shift: $('employeeShift').value,
+    empleadoId:     emp?.id || null,
+    empleadoNombre: emp?.nombre || 'Empleado',
+    employee:       emp?.nombre || 'Empleado',
     status: 'active'
   }
   const id = await db.ventas.add(sale); sale.id = id; sales.push(sale)
