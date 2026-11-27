@@ -13,7 +13,6 @@
 </head>
 <body>
 
-<!-- PIN SCREEN -->
 <!-- PANTALLA DE SELECCIÓN DE ROL -->
 <div class="pin-screen" id="roleScreen">
   <div class="pin-box">
@@ -97,30 +96,6 @@
     </div>
     <div class="pin-error" id="empPinError"></div>
     <button class="pin-cancel" onclick="showEmployeeList()">← Volver</button>
-  </div>
-</div>
-    <div class="pin-dots" id="pinDots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
-      <button class="pin-key del-key" onclick="pinKey('del')">⌫</button>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key del-key" onclick="pinKey('ok')">OK</button>
-    </div>
-    <div class="pin-error" id="pinError"></div>
-    <button class="pin-cancel" onclick="closePinScreen()">Cancelar</button>
   </div>
 </div>
 
@@ -249,7 +224,7 @@
   </div>
 </div>
 
-<!-- MODAL: CIERRE DE CAJA -->
+<!-- MODAL: CIERRE DE CAJA (admin) -->
 <div class="modal-bg" id="closeModal">
   <div class="modal">
     <div class="modal-head">
@@ -267,6 +242,58 @@
   </div>
 </div>
 
+<!-- MODAL: EMPLEADO -->
+<div class="modal-bg" id="empleadoModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="empleadoModalTitle">Nuevo empleado</h3>
+      <button class="modal-close" onclick="closeModal('empleadoModal')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="empleadoId">
+      <div class="field-group">
+        <label class="field-label">Nombre completo</label>
+        <input class="field" id="empleadoNombre" type="text" placeholder="Ej: María García">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Teléfono</label>
+        <input class="field" id="empleadoTelefono" type="tel" placeholder="Ej: 52001234">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Fecha de inicio</label>
+        <input class="field" id="empleadoFechaInicio" type="date">
+      </div>
+      <div class="field-group">
+        <label class="field-label">PIN (4 dígitos)</label>
+        <input class="field" id="empleadoPin" type="number" placeholder="Ej: 5678" maxlength="4">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('empleadoModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveEmpleado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CIERRE DEL DÍA (empleado) -->
+<div class="modal-bg" id="cierreDiaModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Cierre del día</h3>
+      <button class="modal-close" onclick="closeModal('cierreDiaModal')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="cierreDiaBody"></div>
+    <div class="modal-foot" id="cierreDiaFoot">
+      <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
+      <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
@@ -275,8 +302,8 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-mark">
-  <img src="/hero.png" alt="Fabián Stylist Cafetería" class="brand-logo-img">
-</div>
+        <img src="/hero.png" alt="Fabián Stylist Cafetería" class="brand-logo-img">
+      </div>
       <div class="brand-text">
         <strong>Mercaito</strong>
         <small>Punto de venta</small>
@@ -457,7 +484,7 @@
           <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Acción</th><th>Detalle</th><th>Origen</th></tr></thead><tbody id="auditRows"></tbody></table></div>
         </div>
       </section>
-      
+
       <!-- ADMIN: EMPLEADOS -->
       <section class="page" id="admin-empleados">
         <div class="page-head">
@@ -474,45 +501,10 @@
         </div>
       </section>
 
-      <!-- MODAL: EMPLEADO -->
-      <div class="modal-bg" id="empleadoModal">
-        <div class="modal">
-          <div class="modal-head">
-            <h3 id="empleadoModalTitle">Nuevo empleado</h3>
-            <button class="modal-close" onclick="closeModal('empleadoModal')">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-          <div class="modal-body">
-            <input type="hidden" id="empleadoId">
-            <div class="field-group">
-              <label class="field-label">Nombre completo</label>
-              <input class="field" id="empleadoNombre" type="text" placeholder="Ej: María García">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Teléfono</label>
-              <input class="field" id="empleadoTelefono" type="tel" placeholder="Ej: 52001234">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Fecha de inicio</label>
-              <input class="field" id="empleadoFechaInicio" type="date">
-            </div>
-            <div class="field-group">
-              <label class="field-label">PIN (4 dígitos)</label>
-              <input class="field" id="empleadoPin" type="number" placeholder="Ej: 5678" maxlength="4">
-            </div>
-          </div>
-          <div class="modal-foot">
-            <button class="btn" onclick="closeModal('empleadoModal')">Cancelar</button>
-            <button class="btn primary" onclick="saveEmpleado()">Guardar</button>
-          </div>
-        </div>
-      </div>
-      
       <!-- EMPLEADO: VENTA -->
       <section class="page active" id="employee-sale">
         <div class="page-head">
-          <div><h1>Nueva venta</h1><p>Toca los productos para anadirlos al ticket.</p></div>
+          <div><h1>Nueva venta</h1><p>Toca los productos para añadirlos al ticket.</p></div>
         </div>
         <div class="sale-layout">
           <div>
@@ -568,8 +560,8 @@
       <!-- EMPLEADO: HISTORIAL -->
       <section class="page" id="employee-history">
         <div class="page-head">
-          <div><h1>Mis ventas</h1><p>Revisa y corrige tus ventas del dia.</p></div>
-                    <button class="btn primary" onclick="openCierreDia()">
+          <div><h1>Mis ventas</h1><p>Revisa y corrige tus ventas del día.</p></div>
+          <button class="btn primary" onclick="openCierreDia()">
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             Cerrar mi día
           </button>
@@ -578,7 +570,7 @@
           <div class="stat s-green"><label>Ventas realizadas</label><strong id="e-count">0</strong></div>
           <div class="stat"><label>Total vendido</label><strong id="e-total">CUP 0.00</strong></div>
           <div class="stat"><label>Efectivo</label><strong id="e-cash">CUP 0.00</strong></div>
-       <div class="stat s-blue"><label>Transferencias</label><strong id="e-transfer">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Transferencias</label><strong id="e-transfer">CUP 0.00</strong></div>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -589,24 +581,33 @@
           </div>
         </div>
       </section>
-      
-      <!-- MODAL: CIERRE DEL DÍA -->
-      <div class="modal-bg" id="cierreDiaModal">
-        <div class="modal">
-          <div class="modal-head">
-            <h3>Cierre del día</h3>
-            <button class="modal-close" onclick="closeModal('cierreDiaModal')">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-          <div class="modal-body" id="cierreDiaBody"></div>
-          <div class="modal-foot" id="cierreDiaFoot">
-            <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
-            <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>
+
+      <!-- EMPLEADO: SALARIOS -->
+      <section class="page" id="employee-salarios">
+        <div class="page-head">
+          <div><h1>Mis salarios</h1><p>Historial de cierres y salarios cobrados.</p></div>
+          <select class="field" id="salarioPeriod" style="width:160px" onchange="renderMisSalarios()">
+            <option value="month">Este mes</option>
+            <option value="quarter">Este trimestre</option>
+            <option value="all">Todo el período</option>
+          </select>
+        </div>
+        <div class="stats">
+          <div class="stat s-green"><label>Total cobrado</label><strong id="sal-total">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Días trabajados</label><strong id="sal-dias">0</strong></div>
+          <div class="stat"><label>Mayor salario</label><strong id="sal-max">CUP 0.00</strong></div>
+          <div class="stat s-amber"><label>Total vendido</label><strong id="sal-ventas">CUP 0.00</strong></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Fecha</th><th>Ventas realizadas</th><th>Total vendido</th><th>Efectivo</th><th>Transferencias</th><th>Salario</th></tr></thead>
+              <tbody id="salariosRows"></tbody>
+            </table>
           </div>
         </div>
-      </div>
-      
+      </section>
+
       <!-- EMPLEADO: INCIDENCIAS -->
       <section class="page" id="employee-issues">
         <div class="page-head"><div><h1>Reportar problema</h1><p>Comunica incidencias a administración.</p></div></div>
@@ -625,7 +626,7 @@
           </div>
           <div class="card">
             <div class="card-head"><h3>Mis reportes</h3></div>
-            <div class="card-body" id="myIssues"><div class="empty">Todavia no has enviado incidencias.</div></div>
+            <div class="card-body" id="myIssues"><div class="empty">Todavía no has enviado incidencias.</div></div>
           </div>
         </div>
       </section>
