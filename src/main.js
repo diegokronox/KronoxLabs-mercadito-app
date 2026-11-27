@@ -1141,6 +1141,7 @@ Object.assign(window, {
   $('today').textContent = new Date().toLocaleDateString('es', {weekday:'long', day:'numeric', month:'long'})
   if ($('purchaseDate')) $('purchaseDate').value = dateISO()
   buildNav(); fillSelects()
+  showRoleScreen()
   setPayMethod('cash')
   renderAll()
   actualizarIndicador(navigator.onLine)
