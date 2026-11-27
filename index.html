@@ -362,13 +362,22 @@
             <div class="card-body" id="alerts"></div>
           </div>
         </div>
-        <div class="card" style="margin-top:14px">
+                <div class="card" style="margin-top:14px">
           <div class="card-head"><div><h3>Estado general</h3></div></div>
           <div class="card-body grid3">
             <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Productos activos</div><strong style="font-size:24px" id="a-products">0</strong></div>
             <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Incidencias abiertas</div><strong style="font-size:24px" id="a-issues">0</strong></div>
             <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Valor inventario</div><strong style="font-size:24px" id="a-stockvalue">CUP 0.00</strong></div>
           </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><div><h3>Salarios de hoy</h3><p>Cierres confirmados por empleados hoy</p></div></div>
+          <div class="stats" style="padding:16px 16px 0">
+            <div class="stat s-green"><label>Total salarios hoy</label><strong id="a-sal-total">CUP 0.00</strong></div>
+            <div class="stat s-blue"><label>Cierres realizados</label><strong id="a-sal-count">0</strong></div>
+            <div class="stat s-amber"><label>Empleados sin cerrar</label><strong id="a-sal-pending">0</strong></div>
+          </div>
+          <div class="card-body" id="a-sal-detail" style="margin-top:8px"></div>
         </div>
       </section>
 
