@@ -240,7 +240,7 @@ function stockBadge(p) { return p.stock === 0 ? '<span class="badge bad">Agotado
 function methodBadge(m){ return m==='cash'?'<span class="badge ok">Efectivo</span>':m==='transfer'?'<span class="badge info">Transferencia</span>':'<span class="badge purple">Mixto</span>' }
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────
-function renderDashboard() {
+async function renderDashboard() {
   const ss = todaySales(), total = sum(ss)
   const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
   const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
@@ -250,7 +250,26 @@ function renderDashboard() {
   $('a-transfer').textContent = money(transfer)
   $('a-products').textContent = products.length
   $('a-issues').textContent   = issues.filter(i => i.status === 'open').length
-  $('a-stockvalue').textContent = money(products.reduce((a,p) => a + p.cost * p.stock, 0))
+    $('a-stockvalue').textContent = money(products.reduce((a,p) => a + p.cost * p.stock, 0))
+
+  // Salarios de hoy
+  const cierresHoy = await db.cierres.where({ negocio: NEGOCIO, fecha: dateISO() }).toArray()
+  const empleadosActivos = await db.empleados.where({ negocio: NEGOCIO, activo: 1 }).toArray()
+  const salHoy     = cierresHoy.reduce((a, c) => a + c.salario, 0)
+  const pendientes = empleadosActivos.filter(e => !cierresHoy.find(c => c.empleadoId === e.id)).length
+  $('a-sal-total').textContent   = money(salHoy)
+  $('a-sal-count').textContent   = cierresHoy.length
+  $('a-sal-pending').textContent = pendientes
+  $('a-sal-detail').innerHTML = cierresHoy.length
+    ? cierresHoy.map(c => `
+        <div class="report-row">
+          <span>${c.empleadoNombre}</span>
+          <div style="text-align:right">
+            <b class="td-green">${money(c.salario)}</b>
+            <small style="display:block;color:var(--muted)">Vendió ${money(c.totalVentas)}</small>
+          </div>
+        </div>`).join('')
+    : '<div class="empty">Ningún empleado ha cerrado su día aún.</div>'
   $('recentSales').innerHTML = ss.length
     ? ss.slice().reverse().slice(0,8).map(s => `
       <tr>
