@@ -455,6 +455,24 @@
           </div>
           <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Hora</th><th>Productos</th><th>Método</th><th>Total</th></tr></thead><tbody id="reportRows"></tbody></table></div>
         </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3>Salarios del período</h3></div>
+          <div class="stats" style="padding:16px 16px 0">
+            <div class="stat s-green"><label>Total en salarios</label><strong id="rep-sal-total">CUP 0.00</strong></div>
+            <div class="stat s-blue"><label>Días trabajados</label><strong id="rep-sal-dias">0</strong></div>
+            <div class="stat s-amber"><label>Mayor salario individual</label><strong id="rep-sal-max">CUP 0.00</strong></div>
+          </div>
+          <div class="table-wrap" style="margin-top:14px">
+            <table class="table">
+              <thead><tr><th>Empleado</th><th>Días</th><th>Total vendido</th><th>Salario total</th><th>Mayor día</th></tr></thead>
+              <tbody id="rep-sal-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3>Ranking de empleados</h3></div>
+          <div class="card-body" id="rep-ranking"></div>
+        </div>
       </section>
 
       <!-- ADMIN: INCIDENCIAS -->
