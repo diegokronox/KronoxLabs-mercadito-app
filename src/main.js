@@ -1040,6 +1040,7 @@ function renderAll() {
   } else {
     if (currentPage==='sale')    { renderSaleCats(); renderSaleProducts(); renderTicket() }
     if (currentPage==='history')   renderEmployeeHistory()
+    if (currentPage==='salarios')  renderMisSalarios()
     if (currentPage==='issues')    renderMyIssues()
   }
 }
