@@ -1,4 +1,5 @@
-import { db, NEGOCIO, PIN_ADMIN } from './db.js'
+import { db } from './db.js'
+export { NEGOCIO, PIN_ADMIN } from './db.js'
 
 export let currentEmployee = null
 
