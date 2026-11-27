@@ -905,9 +905,9 @@ function exportReport() {
 }
 
 // ── CIERRE DEL DÍA ─────────────────────────────────────────────────────
+// DESPUÉS
 function calcSalary(total) {
-  if (total < 30000) return 1000
-  return 1000 + Math.floor((total - 30000) / 10000) * 500
+  return Math.round(total * 0.04)
 }
 
 async function openCierreDia() {
