@@ -8,16 +8,16 @@ const CATS = ['Alimentos','Bebidas','Lácteos','Cárnicos','Aseo','Limpieza','Du
 
 // ── DATOS SEMILLA ──────────────────────────────────────────────────────
 const SEED = [
-  {negocio:NEGOCIO,n:'Arroz',cat:'Alimentos',price:2.50,cost:1.70,stock:45,expiry:'2026-12-01'},
-  {negocio:NEGOCIO,n:'Frijoles negros',cat:'Alimentos',price:3,cost:2.1,stock:30,expiry:'2026-11-15'},
+  {negocio:NEGOCIO,n:'Arroz',cat:'Alimentos',price:2.50,cost:1.70,stock:45,expiry:'2027-12-01'},
+  {negocio:NEGOCIO,n:'Frijoles negros',cat:'Alimentos',price:3,cost:2.1,stock:30,expiry:'2027-11-15'},
   {negocio:NEGOCIO,n:'Aceite girasol',cat:'Alimentos',price:4.5,cost:3.4,stock:8,expiry:'2027-03-01'},
-  {negocio:NEGOCIO,n:'Refresco',cat:'Bebidas',price:1.5,cost:1,stock:60,expiry:'2026-10-30'},
+  {negocio:NEGOCIO,n:'Refresco',cat:'Bebidas',price:1.5,cost:1,stock:60,expiry:'2027-10-30'},
   {negocio:NEGOCIO,n:'Cerveza',cat:'Bebidas',price:2,cost:1.35,stock:3,expiry:'2027-01-01'},
   {negocio:NEGOCIO,n:'Agua mineral',cat:'Bebidas',price:1,cost:.55,stock:0,expiry:'2027-06-01'},
-  {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lácteos',price:5,cost:3.8,stock:15,expiry:'2026-12-20'},
+  {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lácteos',price:5,cost:3.8,stock:15,expiry:'2027-12-20'},
   {negocio:NEGOCIO,n:'Jabón de baño',cat:'Aseo',price:1.8,cost:1.1,stock:22,expiry:'2028-01-01'},
   {negocio:NEGOCIO,n:'Detergente',cat:'Limpieza',price:3.5,cost:2.4,stock:12,expiry:'2028-06-01'},
-  {negocio:NEGOCIO,n:'Pasta de tomate',cat:'Alimentos',price:1.2,cost:.8,stock:40,expiry:'2026-11-01'},
+  {negocio:NEGOCIO,n:'Pasta de tomate',cat:'Alimentos',price:1.2,cost:.8,stock:40,expiry:'2027-11-01'},
 ]
 
 // ── NAVEGACION ─────────────────────────────────────────────────────────
@@ -48,8 +48,8 @@ let role='employee', currentPage='sale', cart=[], saleCat='Todos'
 let draftLines=[], payMethod='cash', editingSaleId=null, pinBuffer=''
 
 // ── UTILS ──────────────────────────────────────────────────────────────
-const $      = id => document.getElementById(id)
-const money  = n  => 'CUP ' + Number(n || 0).toFixed(2)
+const $       = id => document.getElementById(id)
+const money   = n  => 'CUP ' + Number(n || 0).toFixed(2)
 const dateISO = () => new Date().toISOString().slice(0, 10)
 const nowTime = () => new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'})
 const stamp   = () => new Date().toLocaleString('es')
@@ -184,10 +184,6 @@ async function checkEmpPin() {
     setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
   }
 }
-    box.style.animation = 'none'
-    setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
-  }
-}
 
 // ── ROLES ──────────────────────────────────────────────────────────────
 function activateAdmin() {
@@ -208,9 +204,8 @@ function activateEmployee(emp) {
   toast('Bienvenido, ' + emp.nombre)
 }
 
-function switchToEmployee() {
-  showRoleScreen()
-}
+function switchToEmployee() { showRoleScreen() }
+
 // ── NAVEGACION ─────────────────────────────────────────────────────────
 function buildNav() {
   const list = role === 'admin' ? ADMIN_NAV : EMP_NAV
@@ -294,9 +289,9 @@ function renderInventory() {
 
 function fillSelects() {
   const opts = CATS.map(c => `<option>${c}</option>`).join('')
-  $('prodCat').innerHTML       = opts
-  $('adminCat').innerHTML      = '<option value="">Todas las categorías</option>' + opts
-  $('issueProduct').innerHTML  = '<option value="">Producto no especificado</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
+  $('prodCat').innerHTML          = opts
+  $('adminCat').innerHTML         = '<option value="">Todas las categorías</option>' + opts
+  $('issueProduct').innerHTML     = '<option value="">Producto no especificado</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
   $('purchaseProduct').innerHTML  = '<option value="">Selecciona producto existente</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
   $('purchaseCategory').innerHTML = opts
 }
@@ -305,11 +300,11 @@ function openProduct(id) {
   $('editId').value = id || ''
   $('productModalTitle').textContent = id ? 'Editar producto' : 'Agregar producto'
   const p = products.find(x => x.id === id)
-  $('prodName').value  = p?.n    || ''
-  $('prodCat').value   = p?.cat  || CATS[0]
-  $('prodPrice').value = p?.price ?? ''
-  $('prodCost').value  = p?.cost  ?? ''
-  $('prodStock').value = p?.stock ?? 0
+  $('prodName').value   = p?.n      || ''
+  $('prodCat').value    = p?.cat    || CATS[0]
+  $('prodPrice').value  = p?.price  ?? ''
+  $('prodCost').value   = p?.cost   ?? ''
+  $('prodStock').value  = p?.stock  ?? 0
   $('prodExpiry').value = p?.expiry || ''
   openModal('productModal')
 }
@@ -389,7 +384,6 @@ function setPayMethod(m) {
   payMethod = m
   ;['cash','transfer','mixed'].forEach(x => $('payOpt' + x.charAt(0).toUpperCase() + x.slice(1))?.classList.remove('sel-'+x))
   $('payOpt' + m.charAt(0).toUpperCase() + m.slice(1))?.classList.add('sel-' + m)
-  const total = cart.reduce((a,x) => a + x.price * x.qty, 0)
   $('payFields').innerHTML = m === 'cash' ? `
     <div class="form-group">
       <label class="field-label">Efectivo recibido (CUP)</label>
@@ -452,7 +446,7 @@ function renderTicket() {
 }
 
 async function checkout() {
-  if (!cart.length) { toast('Anade al menos un producto', false); return }
+  if (!cart.length) { toast('Añade al menos un producto', false); return }
   const total    = cart.reduce((a,x) => a + x.price * x.qty, 0)
   const transfer = Math.max(0, Number($('transferAmount')?.value || 0))
   const cashDue  = Number((total - transfer).toFixed(2))
@@ -465,7 +459,7 @@ async function checkout() {
   }
   const change = Number((received - cashDue).toFixed(2))
   const method = payMethod === 'transfer' ? 'transfer' : (transfer > 0 && cashDue > 0 ? 'mixed' : 'cash')
-    const emp = getEmployee()
+  const emp = getEmployee()
   const sale = {
     negocio:NEGOCIO, date:dateISO(), time:nowTime(),
     items: cart.map(x => ({...x})), total, method,
@@ -490,7 +484,7 @@ async function checkout() {
 }
 
 function showCobroModal(sale) {
-  $('cobroEmp').textContent = sale.employee + ' · ' + sale.shift + ' · ' + sale.time
+  $('cobroEmp').textContent = sale.employee + ' · ' + sale.time
   $('cobroItems').innerHTML = '<p>Productos</p>' + sale.items.map(i =>
     `<div class="cobro-item-row"><span>${i.n} × ${i.qty}</span><span>${money(i.price * i.qty)}</span></div>`).join('')
   let grid = `
@@ -507,15 +501,16 @@ function showCobroModal(sale) {
 
 // ── HISTORIAL EMPLEADO ─────────────────────────────────────────────────
 function renderEmployeeHistory() {
-  const ss = todaySales()
+  const emp = getEmployee()
+  const ss  = emp ? todaySales().filter(s => s.empleadoId === emp.id) : todaySales()
   $('e-count').textContent    = ss.length
   $('e-total').textContent    = money(sum(ss))
   $('e-cash').textContent     = money(ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0))
- $('e-transfer').textContent = money(ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0))
+  $('e-transfer').textContent = money(ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0))
   $('employeeSales').innerHTML = ss.slice().reverse().map(s => `
     <tr>
       <td class="td-muted">${s.time}</td>
-      <td>${s.employee || '—'}<br><small class="td-muted">${s.shift || ''}</small></td>
+      <td>${s.employee || '—'}</td>
       <td style="font-size:12px">${s.items.map(i => i.n + ' ×' + i.qty).join(', ')}</td>
       <td>${methodBadge(s.method)}</td>
       <td class="td-green">${money(s.total)}</td>
@@ -525,6 +520,7 @@ function renderEmployeeHistory() {
     </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin ventas hoy.</td></tr>'
 }
 
+// ── MIS SALARIOS ───────────────────────────────────────────────────────
 async function renderMisSalarios() {
   const emp = getEmployee()
   if (!emp) return
@@ -799,19 +795,21 @@ function periodSales() {
   })
 }
 
-function renderReports() {
-  const ss    = periodSales(), total = sum(ss)
+async function renderReports() {
+  const p   = $('reportPeriod').value
+  const now = new Date()
+  const ss  = periodSales(), total = sum(ss)
   const units = ss.reduce((a,s) => a + s.items.reduce((b,i) => b + i.qty, 0), 0)
   $('rep-total').textContent   = money(total)
   $('rep-count').textContent   = ss.length
   $('rep-average').textContent = money(ss.length ? total / ss.length : 0)
   $('rep-units').textContent   = units
   const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-const max = Math.max(cash, transfer, 1)
-$('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer]].map(x => `
-  <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
-  <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/max*100}%"></span></div>`).join('')
+  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
+  const maxPay   = Math.max(cash, transfer, 1)
+  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer]].map(x => `
+    <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
+    <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/maxPay*100}%"></span></div>`).join('')
   const top = {}
   ss.forEach(s => s.items.forEach(i => top[i.n] = (top[i.n] || 0) + i.qty))
   const ranked = Object.entries(top).sort((a,b) => b[1]-a[1]).slice(0,6)
@@ -825,6 +823,54 @@ $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer]].map(x =>
       <td>${s.method==='mixed'?'Mixto':s.method==='cash'?'Efectivo':'Transferencia'}</td>
       <td class="td-strong">${money(s.total)}</td>
     </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin operaciones.</td></tr>'
+
+  // ── SALARIOS POR PERÍODO ──
+  const cierres = await db.cierres.where({ negocio: NEGOCIO }).toArray()
+  const cierresFiltrados = cierres.filter(c => {
+    const d = new Date(c.fecha + 'T12:00:00')
+    if (p === 'all') return true
+    if (p === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    const q = Math.floor(now.getMonth() / 3)
+    return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear()
+  })
+  const salTotalGeneral = cierresFiltrados.reduce((a, c) => a + c.salario, 0)
+  const salMaxGeneral   = cierresFiltrados.length ? Math.max(...cierresFiltrados.map(c => c.salario)) : 0
+  $('rep-sal-total').textContent = money(salTotalGeneral)
+  $('rep-sal-dias').textContent  = cierresFiltrados.length
+  $('rep-sal-max').textContent   = money(salMaxGeneral)
+
+  const porEmpleado = {}
+  cierresFiltrados.forEach(c => {
+    if (!porEmpleado[c.empleadoId]) {
+      porEmpleado[c.empleadoId] = { nombre: c.empleadoNombre, dias: 0, totalVentas: 0, totalSalario: 0, maxVenta: 0, maxFecha: '' }
+    }
+    const e = porEmpleado[c.empleadoId]
+    e.dias++
+    e.totalVentas  += c.totalVentas
+    e.totalSalario += c.salario
+    if (c.totalVentas > e.maxVenta) { e.maxVenta = c.totalVentas; e.maxFecha = c.fecha }
+  })
+  const empArr = Object.values(porEmpleado).sort((a, b) => b.totalVentas - a.totalVentas)
+  $('rep-sal-rows').innerHTML = empArr.length
+    ? empArr.map(e => `
+        <tr>
+          <td class="td-strong">${e.nombre}</td>
+          <td>${e.dias}</td>
+          <td>${money(e.totalVentas)}</td>
+          <td class="td-green"><strong>${money(e.totalSalario)}</strong></td>
+          <td>${e.maxFecha ? money(e.maxVenta) + ' (' + e.maxFecha + ')' : '—'}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">Sin cierres en este período.</td></tr>'
+  $('rep-ranking').innerHTML = empArr.length
+    ? empArr.map((e, i) => `
+        <div class="report-row">
+          <span>${i + 1}. ${e.nombre}</span>
+          <div style="text-align:right">
+            <b>${money(e.totalVentas)}</b>
+            <small style="display:block;color:var(--muted)">Salario: ${money(e.totalSalario)}</small>
+          </div>
+        </div>`).join('')
+    : '<div class="empty">Sin datos en este período.</div>'
 }
 
 function download(content, name, type) {
@@ -952,10 +998,10 @@ function openEmpleadoModal(id = null) {
   if (id) {
     db.empleados.get(id).then(e => {
       if (!e) return
-      $('empleadoNombre').value = e.nombre
-      $('empleadoTelefono').value = e.telefono || ''
+      $('empleadoNombre').value     = e.nombre
+      $('empleadoTelefono').value   = e.telefono || ''
       $('empleadoFechaInicio').value = e.fechaInicio || ''
-      $('empleadoPin').value = e.pin
+      $('empleadoPin').value        = e.pin
     })
   }
   openModal('empleadoModal')
@@ -964,16 +1010,14 @@ function openEmpleadoModal(id = null) {
 async function saveEmpleado() {
   const nombre = $('empleadoNombre').value.trim()
   const pin    = String($('empleadoPin').value).trim()
-  if (!nombre)           { toast('El nombre es obligatorio', false); return }
+  if (!nombre)               { toast('El nombre es obligatorio', false); return }
   if (!/^\d{4}$/.test(pin)) { toast('El PIN debe ser exactamente 4 dígitos', false); return }
-  const id = $('empleadoId').value
+  const id   = $('empleadoId').value
   const data = {
-    negocio: NEGOCIO,
-    nombre,
+    negocio: NEGOCIO, nombre,
     telefono:    $('empleadoTelefono').value.trim(),
     fechaInicio: $('empleadoFechaInicio').value,
-    pin,
-    activo: 1
+    pin, activo: 1
   }
   if (id) {
     await db.empleados.update(Number(id), data)
@@ -1039,15 +1083,14 @@ function renderAll() {
     if (currentPage==='audit')      renderAudit()
     if (currentPage==='empleados')  renderEmpleados()
   } else {
-    if (currentPage==='sale')    { renderSaleCats(); renderSaleProducts(); renderTicket() }
-    if (currentPage==='history')   renderEmployeeHistory()
-    if (currentPage==='salarios')  renderMisSalarios()
-    if (currentPage==='issues')    renderMyIssues()
+    if (currentPage==='sale')      { renderSaleCats(); renderSaleProducts(); renderTicket() }
+    if (currentPage==='history')     renderEmployeeHistory()
+    if (currentPage==='salarios')    renderMisSalarios()
+    if (currentPage==='issues')      renderMyIssues()
   }
 }
 
 // ── EXPONER FUNCIONES AL HTML ──────────────────────────────────────────
-// Necesario porque el HTML usa onclick= y el módulo tiene scope propio
 Object.assign(window, {
   pinKey, openPinScreen, closePinScreen,
   showRoleScreen, showAdminPin, showEmployeeList, showEmployeePin,
