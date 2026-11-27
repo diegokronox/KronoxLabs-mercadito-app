@@ -32,13 +32,14 @@ const ADMIN_NAV = [
 ]
 const EMP_NAV = [
   ['sale','Nueva venta','<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'],
+  ['salarios','Mis salarios','<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'],
   ['history','Mis ventas','<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>'],
   ['issues','Reportar','<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'],
 ]
 const TITLES = {
   dashboard:'Resumen general', inventory:'Inventario', purchases:'Compras y facturas',
   reports:'Reportes', issues:'Incidencias', audit:'Auditoría',
-  sale:'Nueva venta', history:'Mis ventas', empleados:'Empleados'
+  sale:'Nueva venta', history:'Mis ventas', empleados:'Empleados', salarios:'Mis salarios'
 }
 
 // ── ESTADO GLOBAL ──────────────────────────────────────────────────────
