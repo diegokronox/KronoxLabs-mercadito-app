@@ -20,8 +20,8 @@
     <div class="pin-title">Mercaito</div>
     <div class="pin-sub">¿Cómo deseas entrar?</div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px;width:100%">
-      <button class="btn primary full" onclick="showEmployeeList()">👤 Soy empleado</button>
-      <button class="btn full" style="background:var(--surface2)" onclick="showAdminPin()">🔐 Administrador</button>
+      <button class="btn primary full" onclick="showEmployeeList()">Soy empleado</button>
+      <button class="btn full" style="background:var(--surface2)" onclick="showAdminPin()">Administrador</button>
     </div>
   </div>
 </div>
@@ -310,9 +310,6 @@
       </div>
     </div>
     <nav class="nav" id="nav"></nav>
-    <button class="admin-entry visible" id="adminEntry" onclick="openPinScreen()">
-      Acceso administrador
-    </button>
     <div class="sidefoot">
       <div class="sync-pill">
         <div class="sync-led" id="syncLed"></div>
@@ -362,7 +359,7 @@
             <div class="card-body" id="alerts"></div>
           </div>
         </div>
-                <div class="card" style="margin-top:14px">
+        <div class="card" style="margin-top:14px">
           <div class="card-head"><div><h3>Estado general</h3></div></div>
           <div class="card-body grid3">
             <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Productos activos</div><strong style="font-size:24px" id="a-products">0</strong></div>
@@ -598,6 +595,7 @@
           <div class="stat"><label>Total vendido</label><strong id="e-total">CUP 0.00</strong></div>
           <div class="stat"><label>Efectivo</label><strong id="e-cash">CUP 0.00</strong></div>
           <div class="stat s-blue"><label>Transferencias</label><strong id="e-transfer">CUP 0.00</strong></div>
+          <div class="stat s-purple"><label>Mixto</label><strong id="e-mixed">CUP 0.00</strong></div>
         </div>
         <div class="card">
           <div class="table-wrap">
