@@ -115,7 +115,7 @@ async function showEmployeeList() {
     ? empleados.map(e => `
         <button class="btn full" style="background:var(--surface2);justify-content:flex-start;gap:10px"
           onclick="showEmployeePin(${e.id}, '${e.nombre}')">
-          👤 ${e.nombre}
+          ${e.nombre}
         </button>`).join('')
     : '<p style="color:var(--muted);text-align:center;font-size:14px">No hay empleados registrados.<br>Pide al administrador que te agregue.</p>'
   $('roleScreen').classList.remove('open')
@@ -190,7 +190,6 @@ function activateAdmin() {
   role = 'admin'; currentPage = 'dashboard'
   $('roleTag').textContent = 'Administrador'
   $('roleTag').classList.remove('emp')
-  $('adminEntry').classList.remove('visible')
   buildNav(); showPage('dashboard')
   toast('Bienvenido, administrador')
 }
@@ -199,7 +198,6 @@ function activateEmployee(emp) {
   role = 'employee'; currentPage = 'sale'
   $('roleTag').textContent = emp.nombre
   $('roleTag').classList.add('emp')
-  $('adminEntry').classList.add('visible')
   buildNav(); showPage('sale')
   toast('Bienvenido, ' + emp.nombre)
 }
@@ -250,9 +248,8 @@ async function renderDashboard() {
   $('a-transfer').textContent = money(transfer)
   $('a-products').textContent = products.length
   $('a-issues').textContent   = issues.filter(i => i.status === 'open').length
-    $('a-stockvalue').textContent = money(products.reduce((a,p) => a + p.cost * p.stock, 0))
+  $('a-stockvalue').textContent = money(products.reduce((a,p) => a + p.cost * p.stock, 0))
 
-  // Salarios de hoy
   const cierresHoy = await db.cierres.where({ negocio: NEGOCIO, fecha: dateISO() }).toArray()
   const empleadosActivos = await db.empleados.where({ negocio: NEGOCIO, activo: 1 }).toArray()
   const salHoy     = cierresHoy.reduce((a, c) => a + c.salario, 0)
@@ -526,6 +523,7 @@ function renderEmployeeHistory() {
   $('e-total').textContent    = money(sum(ss))
   $('e-cash').textContent     = money(ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0))
   $('e-transfer').textContent = money(ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0))
+  $('e-mixed').textContent    = money(ss.reduce((a,s) => a + (s.method==='mixed' ? s.total : 0), 0))
   $('employeeSales').innerHTML = ss.slice().reverse().map(s => `
     <tr>
       <td class="td-muted">${s.time}</td>
@@ -825,8 +823,9 @@ async function renderReports() {
   $('rep-units').textContent   = units
   const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
   const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const maxPay   = Math.max(cash, transfer, 1)
-  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer]].map(x => `
+  const mixed    = ss.reduce((a,s) => a + (s.method==='mixed' ? s.total : 0), 0)
+  const maxPay   = Math.max(cash, transfer, mixed, 1)
+  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer],['Mixto',mixed]].map(x => `
     <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
     <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/maxPay*100}%"></span></div>`).join('')
   const top = {}
@@ -843,7 +842,6 @@ async function renderReports() {
       <td class="td-strong">${money(s.total)}</td>
     </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin operaciones.</td></tr>'
 
-  // ── SALARIOS POR PERÍODO ──
   const cierres = await db.cierres.where({ negocio: NEGOCIO }).toArray()
   const cierresFiltrados = cierres.filter(c => {
     const d = new Date(c.fecha + 'T12:00:00')
@@ -905,7 +903,6 @@ function exportReport() {
 }
 
 // ── CIERRE DEL DÍA ─────────────────────────────────────────────────────
-// DESPUÉS
 function calcSalary(total) {
   return Math.round(total * 0.04)
 }
