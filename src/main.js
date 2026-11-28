@@ -1,1150 +1,664 @@
-import './style.css'
-import { db } from './db.js'
-import { NEGOCIO, PIN_ADMIN, loginEmployee, getEmployee, logout } from './auth.js'
-import { encolar, intentarSync, actualizarIndicador } from './sync.js'
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F1623">
+<meta name="description" content="Punto de venta y gestión — Mercaito">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>FabianStylist Cafetería</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-// ── CATEGORIAS ─────────────────────────────────────────────────────────
-const CATS = ['Alimentos','Bebidas','Lácteos','Cárnicos','Aseo','Limpieza','Dulcería','Café','Bazar']
+<!-- PANTALLA DE SELECCIÓN DE ROL -->
+<div class="pin-screen" id="roleScreen">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title">Mercaito</div>
+    <div class="pin-sub">¿Cómo deseas entrar?</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px;width:100%">
+      <button class="btn primary full" onclick="showEmployeeList()">Soy empleado</button>
+      <button class="btn full" style="background:var(--surface2)" onclick="showAdminPin()">Administrador</button>
+    </div>
+  </div>
+</div>
 
-// ── DATOS SEMILLA ──────────────────────────────────────────────────────
-const SEED = [
-  {negocio:NEGOCIO,n:'Arroz',cat:'Alimentos',price:2.50,cost:1.70,stock:45,expiry:'2027-12-01'},
-  {negocio:NEGOCIO,n:'Frijoles negros',cat:'Alimentos',price:3,cost:2.1,stock:30,expiry:'2027-11-15'},
-  {negocio:NEGOCIO,n:'Aceite girasol',cat:'Alimentos',price:4.5,cost:3.4,stock:8,expiry:'2027-03-01'},
-  {negocio:NEGOCIO,n:'Refresco',cat:'Bebidas',price:1.5,cost:1,stock:60,expiry:'2027-10-30'},
-  {negocio:NEGOCIO,n:'Cerveza',cat:'Bebidas',price:2,cost:1.35,stock:3,expiry:'2027-01-01'},
-  {negocio:NEGOCIO,n:'Agua mineral',cat:'Bebidas',price:1,cost:.55,stock:0,expiry:'2027-06-01'},
-  {negocio:NEGOCIO,n:'Leche en polvo',cat:'Lácteos',price:5,cost:3.8,stock:15,expiry:'2027-12-20'},
-  {negocio:NEGOCIO,n:'Jabón de baño',cat:'Aseo',price:1.8,cost:1.1,stock:22,expiry:'2028-01-01'},
-  {negocio:NEGOCIO,n:'Detergente',cat:'Limpieza',price:3.5,cost:2.4,stock:12,expiry:'2028-06-01'},
-  {negocio:NEGOCIO,n:'Pasta de tomate',cat:'Alimentos',price:1.2,cost:.8,stock:40,expiry:'2027-11-01'},
-]
+<!-- PIN SCREEN ADMIN -->
+<div class="pin-screen" id="pinScreen">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title">Panel administrador</div>
+    <div class="pin-sub">Ingresa tu PIN para continuar</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key del-key" onclick="pinKey('del')">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del-key" onclick="pinKey('ok')">OK</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="pin-cancel" onclick="showRoleScreen()">← Volver</button>
+  </div>
+</div>
 
-// ── NAVEGACION ─────────────────────────────────────────────────────────
-const ADMIN_NAV = [
-  ['dashboard','Resumen','<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'],
-  ['inventory','Inventario','<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>'],
-  ['purchases','Compras','<svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'],
-  ['reports','Reportes','<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'],
-  ['issues','Incidencias','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'],
-  ['audit','Auditoría','<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'],
-  ['empleados','Empleados','<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'],
-]
-const EMP_NAV = [
-  ['sale','Nueva venta','<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'],
-  ['salarios','Mis salarios','<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'],
-  ['history','Mis ventas','<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>'],
-  ['issues','Reportar','<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'],
-]
-const TITLES = {
-  dashboard:'Resumen general', inventory:'Inventario', purchases:'Compras y facturas',
-  reports:'Reportes', issues:'Incidencias', audit:'Auditoría',
-  sale:'Nueva venta', history:'Mis ventas', empleados:'Empleados', salarios:'Mis salarios'
-}
+<!-- PANTALLA DE SELECCIÓN DE EMPLEADO -->
+<div class="pin-screen" id="employeeListScreen">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title">¿Quién eres?</div>
+    <div class="pin-sub">Selecciona tu nombre</div>
+    <div id="employeeListItems" style="width:100%;margin-top:16px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto"></div>
+    <button class="pin-cancel" onclick="showRoleScreen()">← Volver</button>
+  </div>
+</div>
 
-// ── ESTADO GLOBAL ──────────────────────────────────────────────────────
-let products=[], sales=[], purchases=[], issues=[], auditLog=[]
-let role='employee', currentPage='sale', cart=[], saleCat='Todos'
-let draftLines=[], payMethod='cash', editingSaleId=null, pinBuffer=''
+<!-- PIN SCREEN EMPLEADO -->
+<div class="pin-screen" id="employeePinScreen">
+  <div class="pin-box">
+    <div class="pin-logo">M</div>
+    <div class="pin-title" id="empPinTitle">Empleado</div>
+    <div class="pin-sub">Ingresa tu PIN</div>
+    <div class="pin-dots" id="empPinDots">
+      <div class="pin-dot" id="epd0"></div>
+      <div class="pin-dot" id="epd1"></div>
+      <div class="pin-dot" id="epd2"></div>
+      <div class="pin-dot" id="epd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="empPinKey('1')">1</button>
+      <button class="pin-key" onclick="empPinKey('2')">2</button>
+      <button class="pin-key" onclick="empPinKey('3')">3</button>
+      <button class="pin-key" onclick="empPinKey('4')">4</button>
+      <button class="pin-key" onclick="empPinKey('5')">5</button>
+      <button class="pin-key" onclick="empPinKey('6')">6</button>
+      <button class="pin-key" onclick="empPinKey('7')">7</button>
+      <button class="pin-key" onclick="empPinKey('8')">8</button>
+      <button class="pin-key" onclick="empPinKey('9')">9</button>
+      <button class="pin-key del-key" onclick="empPinKey('del')">⌫</button>
+      <button class="pin-key" onclick="empPinKey('0')">0</button>
+      <button class="pin-key del-key" onclick="empPinKey('ok')">OK</button>
+    </div>
+    <div class="pin-error" id="empPinError"></div>
+    <button class="pin-cancel" onclick="showEmployeeList()">← Volver</button>
+  </div>
+</div>
 
-// ── UTILS ──────────────────────────────────────────────────────────────
-const $       = id => document.getElementById(id)
-const money   = n  => 'CUP ' + Number(n || 0).toFixed(2)
-const dateISO = () => new Date().toISOString().slice(0, 10)
-const nowTime = () => new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'})
-const stamp   = () => new Date().toLocaleString('es')
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg">Listo</span>
+</div>
 
-// ── CARGA DE DATOS ─────────────────────────────────────────────────────
-async function cargarDatos() {
-  products  = await db.productos.where('negocio').equals(NEGOCIO).toArray()
-  if (!products.length) {
-    for (const p of SEED) await db.productos.add(p)
-    products = await db.productos.where('negocio').equals(NEGOCIO).toArray()
-  }
-  sales     = await db.ventas.where('negocio').equals(NEGOCIO).toArray()
-  purchases = await db.facturas.where('negocio').equals(NEGOCIO).toArray()
-  issues    = await db.incidencias.where('negocio').equals(NEGOCIO).toArray()
-  auditLog  = await db.auditoria.where('negocio').equals(NEGOCIO).toArray()
-}
-
-async function registrarAudit(action, detail) {
-  const entry = {negocio:NEGOCIO, date:stamp(), action, detail, origin: role==='admin'?'Administrador':'Empleado'}
-  await db.auditoria.add(entry)
-  auditLog.unshift(entry)
-}
-
-// ── TOAST ──────────────────────────────────────────────────────────────
-function toast(msg, ok=true) {
-  $('toastMsg').textContent = msg
-  const t = $('toast')
-  t.style.display = 'flex'
-  t.style.background = ok ? 'var(--ink)' : 'var(--red)'
-  clearTimeout(window._toast)
-  window._toast = setTimeout(() => t.style.display = 'none', 2500)
-}
-
-// ── SIDEBAR ────────────────────────────────────────────────────────────
-function toggleSidebar() { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('open') }
-function closeSidebar()  { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('open') }
-
-// ── MODALS ─────────────────────────────────────────────────────────────
-function openModal(id)  { $(id).classList.add('open') }
-function closeModal(id) { $(id).classList.remove('open') }
-
-// ── PIN ────────────────────────────────────────────────────────────────
-let empPinBuffer = ''
-let selectedEmployeeId = null
-
-function showRoleScreen() {
-  $('roleScreen').classList.add('open')
-  $('pinScreen').classList.remove('open')
-  $('employeeListScreen').classList.remove('open')
-  $('employeePinScreen').classList.remove('open')
-}
-
-function showAdminPin() {
-  pinBuffer = ''; updatePinDots()
-  $('pinError').textContent = ''
-  $('roleScreen').classList.remove('open')
-  $('pinScreen').classList.add('open')
-}
-
-async function showEmployeeList() {
-  const empleados = await db.empleados.where({ negocio: NEGOCIO, activo: 1 }).toArray()
-  $('employeeListItems').innerHTML = empleados.length
-    ? empleados.map(e => `
-        <button class="btn full" style="background:var(--surface2);justify-content:flex-start;gap:10px"
-          onclick="showEmployeePin(${e.id}, '${e.nombre}')">
-          ${e.nombre}
-        </button>`).join('')
-    : '<p style="color:var(--muted);text-align:center;font-size:14px">No hay empleados registrados.<br>Pide al administrador que te agregue.</p>'
-  $('roleScreen').classList.remove('open')
-  $('employeeListScreen').classList.add('open')
-}
-
-function showEmployeePin(id, nombre) {
-  selectedEmployeeId = id
-  empPinBuffer = ''; updateEmpPinDots()
-  $('empPinTitle').textContent = nombre
-  $('empPinError').textContent = ''
-  $('employeeListScreen').classList.remove('open')
-  $('employeePinScreen').classList.add('open')
-}
-
-function openPinScreen() { showAdminPin() }
-function closePinScreen() { showRoleScreen() }
-
-function pinKey(k) {
-  if (k === 'del')     { pinBuffer = pinBuffer.slice(0, -1) }
-  else if (k === 'ok') { checkPin(); return }
-  else if (pinBuffer.length < 4) { pinBuffer += k }
-  updatePinDots()
-  if (pinBuffer.length === 4) setTimeout(checkPin, 120)
-}
-
-function updatePinDots() {
-  for (let i = 0; i < 4; i++) $('pd' + i).classList.toggle('filled', i < pinBuffer.length)
-}
-
-function checkPin() {
-  if (pinBuffer === PIN_ADMIN) {
-    showRoleScreen(); activateAdmin()
-  } else {
-    $('pinError').textContent = 'PIN incorrecto. Intenta de nuevo.'
-    pinBuffer = ''; updatePinDots()
-    const box = $('pinScreen').querySelector('.pin-box')
-    box.style.animation = 'none'
-    setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
-  }
-}
-
-function empPinKey(k) {
-  if (k === 'del')     { empPinBuffer = empPinBuffer.slice(0, -1) }
-  else if (k === 'ok') { checkEmpPin(); return }
-  else if (empPinBuffer.length < 4) { empPinBuffer += k }
-  updateEmpPinDots()
-  if (empPinBuffer.length === 4) setTimeout(checkEmpPin, 120)
-}
-
-function updateEmpPinDots() {
-  for (let i = 0; i < 4; i++) $('epd' + i).classList.toggle('filled', i < empPinBuffer.length)
-}
-
-async function checkEmpPin() {
-  const ok = await loginEmployee(selectedEmployeeId, empPinBuffer)
-  if (ok) {
-    $('employeePinScreen').classList.remove('open')
-    const emp = getEmployee()
-    activateEmployee(emp)
-  } else {
-    $('empPinError').textContent = 'PIN incorrecto. Intenta de nuevo.'
-    empPinBuffer = ''; updateEmpPinDots()
-    const box = $('employeePinScreen').querySelector('.pin-box')
-    box.style.animation = 'none'
-    setTimeout(() => { box.style.animation = 'shake .4s ease' }, 10)
-  }
-}
-
-// ── ROLES ──────────────────────────────────────────────────────────────
-function activateAdmin() {
-  role = 'admin'; currentPage = 'dashboard'
-  $('roleTag').textContent = 'Administrador'
-  $('roleTag').classList.remove('emp')
-  buildNav(); showPage('dashboard')
-  toast('Bienvenido, administrador')
-}
-
-function activateEmployee(emp) {
-  role = 'employee'; currentPage = 'sale'
-  $('roleTag').textContent = emp.nombre
-  $('roleTag').classList.add('emp')
-  buildNav(); showPage('sale')
-  toast('Bienvenido, ' + emp.nombre)
-}
-
-function switchToEmployee() { showRoleScreen() }
-
-// ── NAVEGACION ─────────────────────────────────────────────────────────
-function buildNav() {
-  const list = role === 'admin' ? ADMIN_NAV : EMP_NAV
-  $('nav').innerHTML = list.map(x => `
-    <button class="nav-btn${currentPage === x[0] ? ' active' : ''}" data-page="${x[0]}" onclick="showPage('${x[0]}')">
-      <span class="dot"></span>${x[2]}<span>${x[1]}</span>
-    </button>`).join('')
-  if (role === 'admin') {
-    $('nav').innerHTML += `
-    <button class="nav-btn" onclick="switchToEmployee()" style="margin-top:auto;border-top:1px solid #1E2A3D;padding-top:14px;margin-top:12px">
-      <span class="dot"></span>
-      <svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <span>Vista empleado</span>
-    </button>`
-  }
-}
-
-function showPage(p) {
-  currentPage = p
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'))
-  const target = (role === 'admin' ? 'admin-' : 'employee-') + p
-  $(target)?.classList.add('active')
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === p))
-  $('topTitle').textContent = TITLES[p] || 'Mercaito'
-  closeSidebar(); renderAll()
-}
-
-// ── HELPERS ────────────────────────────────────────────────────────────
-function todaySales()  { return sales.filter(s => s.date === dateISO() && s.status !== 'void') }
-function sum(arr)      { return arr.reduce((a, x) => a + x.total, 0) }
-function stockBadge(p) { return p.stock === 0 ? '<span class="badge bad">Agotado</span>' : p.stock <= 5 ? '<span class="badge warn">Stock bajo</span>' : '<span class="badge ok">Disponible</span>' }
-function methodBadge(m){ return m==='cash'?'<span class="badge ok">Efectivo</span>':m==='transfer'?'<span class="badge info">Transferencia</span>':'<span class="badge purple">Mixto</span>' }
-
-// ── DASHBOARD ──────────────────────────────────────────────────────────
-async function renderDashboard() {
-  const ss = todaySales(), total = sum(ss)
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  $('a-total').textContent    = money(total)
-  $('a-count').textContent    = ss.length
-  $('a-cash').textContent     = money(cash)
-  $('a-transfer').textContent = money(transfer)
-  $('a-products').textContent = products.length
-  $('a-issues').textContent   = issues.filter(i => i.status === 'open').length
-  $('a-stockvalue').textContent = money(products.reduce((a,p) => a + p.cost * p.stock, 0))
-
-  const cierresHoy = await db.cierres.where({ negocio: NEGOCIO, fecha: dateISO() }).toArray()
-  const empleadosActivos = await db.empleados.where({ negocio: NEGOCIO, activo: 1 }).toArray()
-  const salHoy     = cierresHoy.reduce((a, c) => a + c.salario, 0)
-  const pendientes = empleadosActivos.filter(e => !cierresHoy.find(c => c.empleadoId === e.id)).length
-  $('a-sal-total').textContent   = money(salHoy)
-  $('a-sal-count').textContent   = cierresHoy.length
-  $('a-sal-pending').textContent = pendientes
-  $('a-sal-detail').innerHTML = cierresHoy.length
-    ? cierresHoy.map(c => `
-        <div class="report-row">
-          <span>${c.empleadoNombre}</span>
-          <div style="text-align:right">
-            <b class="td-green">${money(c.salario)}</b>
-            <small style="display:block;color:var(--muted)">Vendió ${money(c.totalVentas)}</small>
-          </div>
-        </div>`).join('')
-    : '<div class="empty">Ningún empleado ha cerrado su día aún.</div>'
-  $('recentSales').innerHTML = ss.length
-    ? ss.slice().reverse().slice(0,8).map(s => `
-      <tr>
-        <td class="td-muted">${s.time}</td>
-        <td>${s.items.map(i => i.n + (i.qty>1?' ×'+i.qty:'')).join(', ')}</td>
-        <td>${methodBadge(s.method)}</td>
-        <td class="td-green">${money(s.total)}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="4" class="empty">Sin ventas hoy.</td></tr>'
-  const alerts = products.filter(p => p.stock <= 5 || (p.expiry && p.expiry <= dateISO()))
-  $('alerts').innerHTML = alerts.length
-    ? alerts.map(p => `
-      <div class="report-row">
-        <div><b style="font-size:13px">${p.n}</b><br><small style="color:var(--muted)">${p.stock===0?'Sin existencias':p.stock+' unidades'}${p.expiry&&p.expiry<=dateISO()?' · Revisar caducidad':''}</small></div>
-        ${stockBadge(p)}
-      </div>`).join('')
-    : '<div class="empty">Sin alertas de inventario.</div>'
-}
-
-// ── INVENTARIO ─────────────────────────────────────────────────────────
-function renderInventory() {
-  const q   = ($('adminSearch').value || '').toLowerCase()
-  const cat = $('adminCat').value
-  const arr = products.filter(p => (!cat || p.cat === cat) && p.n.toLowerCase().includes(q))
-  $('inventoryRows').innerHTML = arr.map(p => `
-    <tr>
-      <td class="td-strong">${p.n}</td><td>${p.cat}</td>
-      <td class="td-price">${money(p.price)}</td><td>${money(p.cost)}</td>
-      <td>${p.stock} ${stockBadge(p)}</td><td>${p.expiry || '—'}</td>
-      <td>
-        <button class="ico-btn" onclick="openProduct(${p.id})">Editar</button>
-        <button class="ico-btn del" onclick="deleteProduct(${p.id})">Eliminar</button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="7" class="empty">Sin productos.</td></tr>'
-}
-
-function fillSelects() {
-  const opts = CATS.map(c => `<option>${c}</option>`).join('')
-  $('prodCat').innerHTML          = opts
-  $('adminCat').innerHTML         = '<option value="">Todas las categorías</option>' + opts
-  $('issueProduct').innerHTML     = '<option value="">Producto no especificado</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
-  $('purchaseProduct').innerHTML  = '<option value="">Selecciona producto existente</option>' + products.map(p => `<option value="${p.id}">${p.n}</option>`).join('')
-  $('purchaseCategory').innerHTML = opts
-}
-
-function openProduct(id) {
-  $('editId').value = id || ''
-  $('productModalTitle').textContent = id ? 'Editar producto' : 'Agregar producto'
-  const p = products.find(x => x.id === id)
-  $('prodName').value   = p?.n      || ''
-  $('prodCat').value    = p?.cat    || CATS[0]
-  $('prodPrice').value  = p?.price  ?? ''
-  $('prodCost').value   = p?.cost   ?? ''
-  $('prodStock').value  = p?.stock  ?? 0
-  $('prodExpiry').value = p?.expiry || ''
-  openModal('productModal')
-}
-
-async function saveProduct() {
-  const id    = Number($('editId').value)
-  const n     = $('prodName').value.trim()
-  const price = Number($('prodPrice').value)
-  const cost  = Number($('prodCost').value)
-  const stock = Number($('prodStock').value)
-  if (!n || $('prodPrice').value === '' || price < 0 || cost < 0 || stock < 0) {
-    toast('Revisa los campos obligatorios', false); return
-  }
-  const p = {negocio:NEGOCIO, n, cat:$('prodCat').value, price, cost, stock, expiry:$('prodExpiry').value}
-  if (id) {
-    p.id = id; await db.productos.put(p)
-    products = products.map(x => x.id === id ? p : x)
-    await registrarAudit('Producto editado', n)
-  } else {
-    const newId = await db.productos.add(p); p.id = newId; products.push(p)
-    await registrarAudit('Producto agregado', n)
-  }
-  await encolar('producto', p)
-  closeModal('productModal'); fillSelects(); renderAll(); toast('Producto guardado')
-}
-
-async function deleteProduct(id) {
-  const p = products.find(x => x.id === id)
-  if (!confirm('Eliminar ' + p.n + ' del catálogo?')) return
-  await db.productos.delete(id)
-  products = products.filter(x => x.id !== id)
-  await registrarAudit('Producto eliminado', p.n)
-  fillSelects(); renderAll(); toast('Producto eliminado')
-}
-
-// ── PUNTO DE VENTA ─────────────────────────────────────────────────────
-function renderSaleCats() {
-  $('saleCats').innerHTML = ['Todos', ...new Set(products.map(p => p.cat))].map(c => `
-    <button class="tab${saleCat===c?' active':''}" onclick="saleCat='${c}';renderSaleCats();renderSaleProducts()">${c}</button>`).join('')
-}
-
-function renderSaleProducts() {
-  const q   = ($('saleSearch').value || '').toLowerCase()
-  const arr = products.filter(p => (saleCat==='Todos' || p.cat===saleCat) && p.n.toLowerCase().includes(q))
-  $('saleProducts').innerHTML = arr.map(p => `
-    <div class="product${p.stock<=0?' disabled':''}" onclick="addCart(${p.id})">
-      <div class="product-name">${p.n}</div>
-      <div class="product-price">${money(p.price)}</div>
-      <div class="product-stock">
-        <span class="stock-dot${p.stock===0?' out':p.stock<=5?' low':''}"></span>
-        ${p.stock<=0?'Sin stock':p.stock+' disponibles'}
+<!-- MODAL: COBRO CONFIRMADO -->
+<div class="modal-bg" id="cobroModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Cobro registrado</h3>
+      <button class="modal-close" onclick="closeModal('cobroModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="cobro-ok">
+        <div class="check-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <h2>Cobro exitoso</h2>
+        <p id="cobroEmp">Venta registrada correctamente</p>
+        <div class="cobro-items" id="cobroItems"></div>
+        <div class="cobro-grid" id="cobroGrid"></div>
       </div>
-    </div>`).join('') || '<div class="empty">Sin productos.</div>'
-}
-
-function addCart(id) {
-  const p = products.find(x => x.id === id)
-  const it = cart.find(x => x.id === id)
-  if (!p || p.stock < 1) return
-  if (it) { if (it.qty >= p.stock) return; it.qty++ }
-  else cart.push({id, n:p.n, price:p.price, qty:1})
-  renderTicket()
-}
-
-function cartQty(id, d) {
-  const it = cart.find(x => x.id === id)
-  const p  = products.find(x => x.id === id)
-  if (!it) return; it.qty += d
-  if (it.qty < 1) cart = cart.filter(x => x.id !== id)
-  else if (it.qty > p.stock) it.qty = p.stock
-  renderTicket()
-}
-
-function clearTicket() { cart = []; renderTicket() }
-
-function setPayMethod(m) {
-  payMethod = m
-  ;['cash','transfer','mixed'].forEach(x => $('payOpt' + x.charAt(0).toUpperCase() + x.slice(1))?.classList.remove('sel-'+x))
-  $('payOpt' + m.charAt(0).toUpperCase() + m.slice(1))?.classList.add('sel-' + m)
-  $('payFields').innerHTML = m === 'cash' ? `
-    <div class="form-group">
-      <label class="field-label">Efectivo recibido (CUP)</label>
-      <input class="field" id="received" type="number" min="0" step=".01" placeholder="0.00" oninput="updateChange()">
     </div>
-    <div id="changeRow" class="change-row" style="display:none">
-      <span>Vuelto</span><strong id="changeAmt">CUP 0.00</strong>
-    </div>`
-  : m === 'transfer' ? ''
-  : `
-    <div class="form-group">
-      <label class="field-label">Parte en transferencia (CUP)</label>
-      <input class="field" id="transferAmount" type="number" min="0" step=".01" value="0" oninput="updateChange()">
+    <div class="modal-foot">
+      <button class="btn primary full" onclick="closeModal('cobroModal')">Nueva venta</button>
     </div>
-    <div class="form-group">
-      <label class="field-label">Efectivo recibido (CUP)</label>
-      <input class="field" id="received" type="number" min="0" step=".01" placeholder="0.00" oninput="updateChange()">
+  </div>
+</div>
+
+<!-- MODAL: PRODUCTO -->
+<div class="modal-bg" id="productModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="productModalTitle">Agregar producto</h3>
+      <button class="modal-close" onclick="closeModal('productModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div id="changeRow" class="change-row" style="display:none">
-      <span>Vuelto</span><strong id="changeAmt">CUP 0.00</strong>
-    </div>`
-  updateChange()
-}
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-group"><label class="field-label">Nombre del producto</label><input class="field" id="prodName" placeholder="Ej: Arroz grano largo 1kg"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Categoría</label><select class="field" id="prodCat"></select></div>
+        <div class="form-group"><label class="field-label">Precio de venta (CUP)</label><input class="field" type="number" min="0" step=".01" id="prodPrice" placeholder="0.00"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Costo unitario (CUP)</label><input class="field" type="number" min="0" step=".01" id="prodCost" placeholder="0.00"></div>
+        <div class="form-group"><label class="field-label">Stock actual</label><input class="field" type="number" min="0" step="1" id="prodStock" placeholder="0"></div>
+      </div>
+      <div class="form-group"><label class="field-label">Fecha de caducidad</label><input class="field" type="date" id="prodExpiry"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('productModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveProduct()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Guardar producto
+      </button>
+    </div>
+  </div>
+</div>
 
-function updateChange() {
-  const total    = cart.reduce((a,x) => a + x.price * x.qty, 0)
-  const transfer = Math.max(0, Number($('transferAmount')?.value || 0))
-  const cashDue  = Math.max(0, total - transfer)
-  const received = Number($('received')?.value || 0)
-  const changeRow = $('changeRow')
-  if (changeRow) {
-    const change = received - cashDue
-    changeRow.style.display = received > 0 ? 'flex' : 'none'
-    if ($('changeAmt')) {
-      $('changeAmt').textContent = money(Math.max(0, change))
-      $('changeAmt').style.color = change >= 0 ? 'var(--green)' : 'var(--red)'
-    }
-  }
-}
+<!-- MODAL: FACTURA -->
+<div class="modal-bg" id="purchaseModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Registrar factura de compra</h3>
+      <button class="modal-close" onclick="closeModal('purchaseModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Proveedor</label><input class="field" id="supplier" placeholder="Nombre del proveedor"></div>
+        <div class="form-group"><label class="field-label">Número de factura</label><input class="field" id="invoice" placeholder="Ej. F-001"></div>
+      </div>
+      <div class="form-group"><label class="field-label">Fecha</label><input class="field" id="purchaseDate" type="date"></div>
+      <div class="notice">Añade líneas. Si el producto ya existe, se suma la cantidad al stock y se actualiza el costo.</div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Producto existente</label><select class="field" id="purchaseProduct"></select></div>
+        <div class="form-group"><label class="field-label">O nombre nuevo</label><input class="field" id="newPurchaseProduct" placeholder="Nombre nuevo (opcional)"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Categoría</label><select class="field" id="purchaseCategory"></select></div>
+        <div class="form-group"><label class="field-label">Cantidad recibida</label><input class="field" id="purchaseQty" type="number" min="1" value="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="field-label">Costo unitario (CUP)</label><input class="field" id="purchaseCost" type="number" min="0" step=".01" placeholder="0.00" oninput="suggestPurchasePrice()"></div>
+        <div class="form-group"><label class="field-label">Precio de venta sugerido (CUP)</label><input class="field" id="purchasePrice" type="number" min="0" step=".01" placeholder="Costo + 30%"><small style="font-size:11px;color:var(--muted)">Ajusta si es necesario</small></div>
+      </div>
+      <button class="btn ghost full" style="margin-bottom:10px" onclick="addPurchaseLine()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Añadir artículo a factura
+      </button>
+      <div id="purchaseDraft"></div>
+      <div class="report-row"><span style="font-weight:600">Total factura</span><strong id="purchaseDraftTotal" style="color:var(--accent)">CUP 0.00</strong></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('purchaseModal')">Cancelar</button>
+      <button class="btn primary" onclick="savePurchase()">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Guardar factura
+      </button>
+    </div>
+  </div>
+</div>
 
-function renderTicket() {
-  const total = cart.reduce((a,x) => a + x.price * x.qty, 0)
-  $('ticketItems').innerHTML = cart.length
-    ? cart.map(x => `
-      <div class="t-item">
-        <div class="t-name">${x.n}<small>${money(x.price)} c/u</small></div>
-        <div class="qty-ctrl">
-          <button class="qty-btn" onclick="cartQty(${x.id},-1)">−</button>
-          <span class="t-qty">${x.qty}</span>
-          <button class="qty-btn" onclick="cartQty(${x.id},1)">+</button>
-        </div>
-        <div class="t-price">${money(x.price * x.qty)}</div>
-        <button class="t-del" onclick="cartQty(${x.id},-${x.qty})">
-          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<!-- MODAL: EDITAR VENTA -->
+<div class="modal-bg" id="editSaleModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Corregir venta registrada</h3>
+      <button class="modal-close" onclick="closeModal('editSaleModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="notice">Puedes corregir cantidades y forma de pago. El sistema ajustará el inventario y guardará el historial del cambio.</div>
+      <div id="editSaleItems"></div>
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group"><label class="field-label">Transferencia (CUP)</label><input class="field" id="editTransfer" type="number" min="0" step=".01" oninput="updateEditSaleTotals()"></div>
+        <div class="form-group"><label class="field-label">Efectivo recibido (CUP)</label><input class="field" id="editReceived" type="number" min="0" step=".01" oninput="updateEditSaleTotals()"></div>
+      </div>
+      <div class="report-row"><span>Nuevo total</span><b id="editTotal">CUP 0.00</b></div>
+      <div class="report-row"><span>Efectivo que corresponde</span><b id="editCashDue">CUP 0.00</b></div>
+      <div class="report-row"><span>Vuelto</span><b id="editChange">CUP 0.00</b></div>
+      <div class="form-group" style="margin-top:14px"><label class="field-label">Motivo del cambio (obligatorio)</label><textarea class="field" id="editReason" rows="3" placeholder="Ej. Se cobró una unidad de más..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('editSaleModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveSaleEdit()">Guardar corrección</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CIERRE DE CAJA (admin) -->
+<div class="modal-bg" id="closeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Cierre de caja</h3>
+      <button class="modal-close" onclick="closeModal('closeModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="closeBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('closeModal')">Cerrar</button>
+      <button class="btn primary" onclick="exportClose()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar cierre
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EMPLEADO -->
+<div class="modal-bg" id="empleadoModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="empleadoModalTitle">Nuevo empleado</h3>
+      <button class="modal-close" onclick="closeModal('empleadoModal')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="empleadoId">
+      <div class="field-group">
+        <label class="field-label">Nombre completo</label>
+        <input class="field" id="empleadoNombre" type="text" placeholder="Ej: María García">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Teléfono</label>
+        <input class="field" id="empleadoTelefono" type="tel" placeholder="Ej: 52001234">
+      </div>
+      <div class="field-group">
+        <label class="field-label">Fecha de inicio</label>
+        <input class="field" id="empleadoFechaInicio" type="date">
+      </div>
+      <div class="field-group">
+        <label class="field-label">PIN (4 dígitos)</label>
+        <input class="field" id="empleadoPin" type="number" placeholder="Ej: 5678" maxlength="4">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('empleadoModal')">Cancelar</button>
+      <button class="btn primary" onclick="saveEmpleado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CIERRE DEL DÍA (empleado) -->
+<div class="modal-bg" id="cierreDiaModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Cierre del día</h3>
+      <button class="modal-close" onclick="closeModal('cierreDiaModal')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="cierreDiaBody"></div>
+    <div class="modal-foot" id="cierreDiaFoot">
+      <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
+      <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- APP SHELL -->
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <img src="/hero.png" alt="Fabián Stylist Cafetería" class="brand-logo-img">
+      </div>
+      <div class="brand-text">
+        <strong>Mercaito</strong>
+        <small>Punto de venta</small>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidefoot">
+      <div class="sync-pill">
+        <div class="sync-led" id="syncLed"></div>
+        <span class="sync-txt" id="syncTxt">Verificando conexión...</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="hamb" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-      </div>`).join('')
-    : '<div class="ticket-empty">Selecciona productos del catálogo</div>'
-  $('ticketTotal').textContent = money(total)
-  updateChange()
-}
+        <span class="top-title" id="topTitle">Nueva venta</span>
+      </div>
+      <div class="top-right">
+        <span class="top-date" id="today"></span>
+        <span class="role-tag emp" id="roleTag">Empleado</span>
+      </div>
+    </header>
 
-async function checkout() {
-  if (!cart.length) { toast('Añade al menos un producto', false); return }
-  const total    = cart.reduce((a,x) => a + x.price * x.qty, 0)
-  const transfer = Math.max(0, Number($('transferAmount')?.value || 0))
-  const cashDue  = Number((total - transfer).toFixed(2))
-  const received = Number($('received')?.value || 0)
-  if (transfer > total + .001) { toast('La transferencia no puede superar el total', false); return }
-  if (payMethod !== 'transfer' && cashDue > 0.001 && received < cashDue) { toast('El efectivo no cubre la parte pendiente', false); return }
-  for (const it of cart) {
-    const p = products.find(x => x.id === it.id)
-    if (!p || p.stock < it.qty) { toast('Stock insuficiente: ' + it.n, false); return }
-  }
-  const change = Number((received - cashDue).toFixed(2))
-  const method = payMethod === 'transfer' ? 'transfer' : (transfer > 0 && cashDue > 0 ? 'mixed' : 'cash')
-  const emp = getEmployee()
-  const sale = {
-    negocio:NEGOCIO, date:dateISO(), time:nowTime(),
-    items: cart.map(x => ({...x})), total, method,
-    cashAmount:cashDue, transferAmount:transfer, received, change,
-    empleadoId:     emp?.id || null,
-    empleadoNombre: emp?.nombre || 'Empleado',
-    employee:       emp?.nombre || 'Empleado',
-    status: 'active'
-  }
-  const id = await db.ventas.add(sale); sale.id = id; sales.push(sale)
-  for (const it of cart) {
-    const p = products.find(x => x.id === it.id)
-    p.stock -= it.qty; await db.productos.put(p)
-  }
-  await registrarAudit('Venta registrada', money(total) + ' · ' + sale.employee)
-  await encolar('venta', sale)
-  showCobroModal(sale)
-  cart = []
-  if ($('received'))       $('received').value = ''
-  if ($('transferAmount')) $('transferAmount').value = '0'
-  renderAll()
-}
+    <div class="content">
 
-function showCobroModal(sale) {
-  $('cobroEmp').textContent = sale.employee + ' · ' + sale.time
-  $('cobroItems').innerHTML = '<p>Productos</p>' + sale.items.map(i =>
-    `<div class="cobro-item-row"><span>${i.n} × ${i.qty}</span><span>${money(i.price * i.qty)}</span></div>`).join('')
-  let grid = `
-    <div class="cobro-box"><div class="cobro-box-label">Total cobrado</div><div class="cobro-box-val big">${money(sale.total)}</div></div>
-    <div class="cobro-box"><div class="cobro-box-label">Método</div><div class="cobro-box-val">${sale.method==='cash'?'Efectivo':sale.method==='transfer'?'Transferencia':'Mixto'}</div></div>`
-  if (sale.cashAmount > 0) grid += `
-    <div class="cobro-box"><div class="cobro-box-label">Efectivo recibido</div><div class="cobro-box-val">${money(sale.received)}</div></div>
-    <div class="cobro-box"><div class="cobro-box-label">Vuelto</div><div class="cobro-box-val" style="color:var(--green)">${money(sale.change)}</div></div>`
-  if (sale.transferAmount > 0) grid += `
-    <div class="cobro-box"><div class="cobro-box-label">Transferencia</div><div class="cobro-box-val" style="color:var(--blue)">${money(sale.transferAmount)}</div></div>`
-  $('cobroGrid').innerHTML = grid
-  openModal('cobroModal')
-}
-
-// ── HISTORIAL EMPLEADO ─────────────────────────────────────────────────
-function renderEmployeeHistory() {
-  const emp = getEmployee()
-  const ss  = emp ? todaySales().filter(s => s.empleadoId === emp.id) : todaySales()
-  $('e-count').textContent    = ss.length
-  $('e-total').textContent    = money(sum(ss))
-  $('e-cash').textContent     = money(ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0))
-  $('e-transfer').textContent = money(ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0))
-  $('employeeSales').innerHTML = ss.slice().reverse().map(s => `
-    <tr>
-      <td class="td-muted">${s.time}</td>
-      <td>${s.employee || '—'}</td>
-      <td style="font-size:12px">${s.items.map(i => i.n + ' ×' + i.qty).join(', ')}</td>
-      <td>${methodBadge(s.method)}</td>
-      <td class="td-green">${money(s.total)}</td>
-      <td>${s.status==='void'
-        ? '<span class="badge bad">Anulada</span>'
-        : `<button class="ico-btn" onclick="openSaleEdit(${s.id})">Editar</button>`}</td>
-    </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin ventas hoy.</td></tr>'
-}
-
-// ── MIS SALARIOS ───────────────────────────────────────────────────────
-async function renderMisSalarios() {
-  const emp = getEmployee()
-  if (!emp) return
-  const p   = $('salarioPeriod')?.value || 'month'
-  const now = new Date()
-  const all = await db.cierres.where({ negocio: NEGOCIO, empleadoId: emp.id }).toArray()
-  const filtered = all.filter(c => {
-    const d = new Date(c.fecha + 'T12:00:00')
-    if (p === 'all') return true
-    if (p === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    const q = Math.floor(now.getMonth() / 3)
-    return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear()
-  }).sort((a, b) => b.fecha.localeCompare(a.fecha))
-
-  const totalSalario = filtered.reduce((a, c) => a + c.salario, 0)
-  const totalVentas  = filtered.reduce((a, c) => a + c.totalVentas, 0)
-  const maxSalario   = filtered.length ? Math.max(...filtered.map(c => c.salario)) : 0
-
-  $('sal-total').textContent  = money(totalSalario)
-  $('sal-dias').textContent   = filtered.length
-  $('sal-max').textContent    = money(maxSalario)
-  $('sal-ventas').textContent = money(totalVentas)
-
-  $('salariosRows').innerHTML = filtered.length
-    ? filtered.map(c => `
-        <tr>
-          <td class="td-muted">${c.fecha}</td>
-          <td>${c.cantidadVentas}</td>
-          <td class="td-strong">${money(c.totalVentas)}</td>
-          <td>${money(c.desglose?.cash || 0)}</td>
-          <td>${money(c.desglose?.transfer || 0)}</td>
-          <td class="td-green"><strong>${money(c.salario)}</strong></td>
-        </tr>`).join('')
-    : '<tr><td colspan="6" class="empty">Sin cierres en este período.</td></tr>'
-}
-
-// ── INCIDENCIAS ────────────────────────────────────────────────────────
-async function submitIssue() {
-  const id   = Number($('issueProduct').value)
-  const p    = products.find(x => x.id === id)
-  const desc = $('issueDesc').value.trim()
-  if (!desc) { toast('Describe el problema', false); return }
-  const issue = {negocio:NEGOCIO, date:stamp(), product:p?.n || 'No especificado', type:$('issueType').value, desc, status:'open'}
-  const issueId = await db.incidencias.add(issue); issue.id = issueId; issues.unshift(issue)
-  $('issueDesc').value = ''
-  await registrarAudit('Incidencia reportada', p?.n || 'Sin producto')
-  renderIssues(); renderMyIssues(); toast('Incidencia enviada a administración')
-}
-
-function renderMyIssues() {
-  $('myIssues').innerHTML = issues.length
-    ? issues.slice(0,8).map(i => `
-      <div class="report-row">
-        <div><b style="font-size:13px">${i.product}</b><br><small style="color:var(--muted)">${i.type} · ${i.date}</small><br><span style="font-size:12px">${i.desc}</span></div>
-        ${i.status==='open'?'<span class="badge warn">Pendiente</span>':'<span class="badge ok">Resuelta</span>'}
-      </div>`).join('')
-    : '<div class="empty">Sin incidencias enviadas.</div>'
-}
-
-function renderIssues() {
-  renderCorrections()
-  const f   = $('issueFilter')?.value || 'all'
-  const arr = issues.filter(i => f==='all' || i.status===f)
-  $('issueRows').innerHTML = arr.map(i => `
-    <tr>
-      <td class="td-muted" style="font-size:12px">${i.date}</td>
-      <td class="td-strong">${i.product}</td><td>${i.type}</td><td>${i.desc}</td>
-      <td>${i.status==='open'?'<span class="badge warn">Pendiente</span>':'<span class="badge ok">Resuelta</span>'}</td>
-      <td>${i.status==='open'?`<button class="ico-btn" onclick="resolveIssue(${i.id})">Resolver</button>`:'—'}</td>
-    </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin incidencias.</td></tr>'
-}
-
-async function resolveIssue(id) {
-  const i = issues.find(x => x.id === id)
-  if (!i) return
-  i.status = 'resolved'; await db.incidencias.put(i)
-  await registrarAudit('Incidencia resuelta', i.product || '')
-  renderIssues(); renderDashboard(); toast('Incidencia resuelta')
-}
-
-// ── COMPRAS ────────────────────────────────────────────────────────────
-function renderPurchases() {
-  const total = purchases.reduce((a,p) => a + p.total, 0)
-  const units = purchases.reduce((a,p) => a + p.lines.reduce((b,l) => b + l.qty, 0), 0)
-  $('p-count').textContent     = purchases.length
-  $('p-total').textContent     = money(total)
-  $('p-suppliers').textContent = new Set(purchases.map(p => p.supplier)).size
-  $('p-units').textContent     = units
-  $('purchaseRows').innerHTML  = purchases.slice().reverse().map(p => `
-    <tr>
-      <td class="td-muted">${p.date}</td><td class="td-strong">${p.invoice}</td><td>${p.supplier}</td>
-      <td style="font-size:12px">${p.lines.map(l => l.name + ' ×' + l.qty).join(', ')}</td>
-      <td class="td-price">${money(p.total)}</td>
-    </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin facturas registradas.</td></tr>'
-}
-
-function openPurchase() {
-  draftLines = []
-  $('supplier').value = ''; $('invoice').value = ''; $('purchaseDate').value = dateISO()
-  $('newPurchaseProduct').value = ''; $('purchaseQty').value = 1
-  $('purchaseCost').value = ''; $('purchasePrice').value = ''
-  fillSelects(); renderPurchaseDraft(); openModal('purchaseModal')
-}
-
-function suggestPurchasePrice() {
-  const c = Number($('purchaseCost').value || 0)
-  $('purchasePrice').value = c > 0 ? (c * 1.3).toFixed(2) : ''
-}
-
-function addPurchaseLine() {
-  const id      = Number($('purchaseProduct').value)
-  const p       = products.find(x => x.id === id)
-  const newName = $('newPurchaseProduct').value.trim()
-  const qty     = Number($('purchaseQty').value)
-  const cost    = Number($('purchaseCost').value)
-  const price   = $('purchasePrice').value === '' ? Number((cost * 1.3).toFixed(2)) : Number($('purchasePrice').value)
-  if ((!p && !newName) || qty <= 0 || $('purchaseCost').value === '' || cost < 0 || price < 0) {
-    toast('Completa producto, cantidad y costo', false); return
-  }
-  draftLines.push({id:id||null, name:p?.n||newName, cat:p?.cat||$('purchaseCategory').value||'Alimentos', qty, cost, price})
-  $('newPurchaseProduct').value = ''; $('purchaseQty').value = 1
-  $('purchaseCost').value = ''; $('purchasePrice').value = ''
-  renderPurchaseDraft()
-}
-
-function renderPurchaseDraft() {
-  $('purchaseDraft').innerHTML = draftLines.map((l,i) => `
-    <div class="report-row">
-      <span>${l.name} · ${l.qty} × ${money(l.cost)}
-        <button class="ico-btn del" style="margin-left:6px" onclick="draftLines.splice(${i},1);renderPurchaseDraft()">Quitar</button>
-      </span>
-      <b>${money(l.qty * l.cost)}</b>
-    </div>`).join('') || '<div class="empty" style="padding:16px">Añade artículos de la factura.</div>'
-  $('purchaseDraftTotal').textContent = money(draftLines.reduce((a,l) => a + l.qty * l.cost, 0))
-}
-
-async function savePurchase() {
-  const supplier = $('supplier').value.trim()
-  const invoice  = $('invoice').value.trim()
-  if (!supplier || !invoice || !draftLines.length) {
-    toast('Completa proveedor, factura y artículos', false); return
-  }
-  for (const l of draftLines) {
-    const p = l.id
-      ? products.find(x => x.id === l.id)
-      : products.find(x => x.n.toLowerCase() === l.name.toLowerCase())
-    if (p) { p.stock += l.qty; p.cost = l.cost; p.price = l.price; await db.productos.put(p) }
-    else {
-      const np = {negocio:NEGOCIO, n:l.name, cat:l.cat||'Alimentos', price:l.price, cost:l.cost, stock:l.qty, expiry:''}
-      const newId = await db.productos.add(np); np.id = newId; products.push(np)
-    }
-  }
-  const purchase = {
-    negocio:NEGOCIO, date:$('purchaseDate').value||dateISO(), supplier, invoice,
-    lines: draftLines.map(x => ({...x})),
-    total: draftLines.reduce((a,l) => a + l.qty * l.cost, 0)
-  }
-  const fId = await db.facturas.add(purchase); purchase.id = fId; purchases.push(purchase)
-  await registrarAudit('Factura registrada', invoice + ' · ' + supplier)
-  await encolar('factura', purchase)
-  closeModal('purchaseModal'); fillSelects(); renderAll(); toast('Factura registrada — inventario actualizado')
-}
-
-// ── CORRECCION DE VENTAS ───────────────────────────────────────────────
-function openSaleEdit(id) {
-  const sale = sales.find(x => x.id === id)
-  if (!sale || sale.status === 'void') return
-  editingSaleId = id; $('editReason').value = ''
-  $('editTransfer').value = Number(sale.transferAmount ?? (sale.method==='transfer' ? sale.total : 0))
-  $('editReceived').value = Number(sale.received ?? sale.cashAmount ?? 0)
-  $('editSaleItems').innerHTML = sale.items.map((it,i) => `
-    <div class="report-row" style="align-items:center;gap:12px">
-      <span style="flex:1"><b>${it.n}</b><br><small style="color:var(--muted)">Precio: ${money(it.price)}</small></span>
-      <label style="font-size:13px;font-weight:600">Cant.
-        <input class="field edit-item-qty" data-index="${i}" type="number" min="0" step="1" value="${it.qty}" style="width:80px;margin-top:4px" oninput="updateEditSaleTotals()">
-      </label>
-    </div>`).join('')
-  updateEditSaleTotals(); openModal('editSaleModal')
-}
-
-function getEditedItems() {
-  const sale = sales.find(x => x.id === editingSaleId)
-  if (!sale) return []
-  return sale.items.map((it,i) => ({
-    ...it,
-    qty: Math.max(0, Math.floor(Number(document.querySelector(`.edit-item-qty[data-index="${i}"]`)?.value || 0)))
-  })).filter(it => it.qty > 0)
-}
-
-function updateEditSaleTotals() {
-  if (!editingSaleId) return
-  const items    = getEditedItems()
-  const total    = items.reduce((a,x) => a + x.price * x.qty, 0)
-  const transfer = Number($('editTransfer').value || 0)
-  const cashDue  = Math.max(0, total - transfer)
-  const received = Number($('editReceived').value || 0)
-  $('editTotal').textContent   = money(total)
-  $('editCashDue').textContent = money(cashDue)
-  $('editChange').textContent  = money(Math.max(0, received - cashDue))
-  $('editChange').style.color  = received >= cashDue ? 'var(--green)' : 'var(--red)'
-}
-
-async function saveSaleEdit() {
-  const sale = sales.find(x => x.id === editingSaleId)
-  if (!sale) return
-  const reason = $('editReason').value.trim()
-  if (!reason) { toast('Explica el motivo del cambio', false); $('editReason').focus(); return }
-  const oldItems = sale.items.map(x => ({...x})), oldTotal = sale.total
-  const newItems = getEditedItems()
-  const newTotal = Number(newItems.reduce((a,x) => a + x.price * x.qty, 0).toFixed(2))
-  const transfer = Number($('editTransfer').value || 0)
-  const cashDue  = Number((newTotal - transfer).toFixed(2))
-  const received = Number($('editReceived').value || 0)
-  if (!newItems.length) { toast('La venta debe tener al menos un producto', false); return }
-  if (transfer < 0 || transfer > newTotal) { toast('La transferencia debe estar entre 0 y el total', false); return }
-  if (received < cashDue) { toast('El efectivo recibido no cubre la parte en efectivo', false); return }
-  oldItems.forEach(it => { const p = products.find(x => x.id === it.id); if (p) p.stock += it.qty })
-  for (const it of newItems) {
-    const p = products.find(x => x.id === it.id)
-    if (!p || p.stock < it.qty) {
-      oldItems.forEach(o => { const pp = products.find(x => x.id === o.id); if (pp) pp.stock -= o.qty })
-      toast('Stock insuficiente: ' + it.n, false); return
-    }
-  }
-  for (const it of newItems) { const p = products.find(x => x.id === it.id); p.stock -= it.qty; await db.productos.put(p) }
-  const change = Number((received - cashDue).toFixed(2))
-  const method = transfer > 0 && cashDue > 0 ? 'mixed' : transfer > 0 ? 'transfer' : 'cash'
-  const changeRecord = {
-    date:stamp(), employee:sale.employee||'Empleado', reason,
-    before:{items:oldItems, total:oldTotal},
-    after:{items:newItems.map(x=>({...x})), total:newTotal, transfer, cash:cashDue, received, change}
-  }
-  sale.changes = sale.changes || []; sale.changes.push(changeRecord)
-  sale.items = newItems; sale.total = newTotal; sale.transferAmount = transfer
-  sale.cashAmount = cashDue; sale.received = received; sale.change = change; sale.method = method
-  await db.ventas.put(sale)
-  await registrarAudit('Venta corregida', 'Venta #' + sale.id + ' · ' + reason)
-  closeModal('editSaleModal'); renderAll(); toast('Cambio guardado y registrado')
-}
-
-function renderCorrections() {
-  const el = $('correctionRows'); if (!el) return
-  const rows = []
-  sales.forEach(s => (s.changes || []).forEach(c => rows.push({sale:s, change:c})))
-  rows.sort((a,b) => b.change.date.localeCompare(a.change.date))
-  el.innerHTML = rows.map(x => `
-    <tr>
-      <td class="td-muted" style="font-size:12px">${x.change.date}</td>
-      <td>${x.change.employee}</td><td>#${x.sale.id}</td><td>${x.change.reason}</td>
-      <td><button class="ico-btn" onclick="showSaleChange(${x.sale.id},'${encodeURIComponent(x.change.date)}')">Ver</button></td>
-    </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin correcciones.</td></tr>'
-}
-
-function showSaleChange(id, dateEncoded) {
-  const s = sales.find(x => x.id === id)
-  const d = decodeURIComponent(dateEncoded)
-  const c = s?.changes?.find(x => x.date === d); if (!c) return
-  alert('VENTA #' + id + '\nMotivo: ' + c.reason +
-    '\nAntes: ' + c.before.items.map(x => x.n + ' ×' + x.qty).join(', ') + ' — ' + money(c.before.total) +
-    '\nDespues: ' + c.after.items.map(x => x.n + ' ×' + x.qty).join(', ') + ' — ' + money(c.after.total))
-}
-
-// ── REPORTES ───────────────────────────────────────────────────────────
-function periodSales() {
-  const p = $('reportPeriod').value, now = new Date()
-  return sales.filter(s => s.status !== 'void').filter(s => {
-    const d = new Date(s.date + 'T12:00:00')
-    if (p === 'all') return true
-    if (p === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    const q = Math.floor(now.getMonth() / 3)
-    return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear()
-  })
-}
-
-async function renderReports() {
-  const p   = $('reportPeriod').value
-  const now = new Date()
-  const ss  = periodSales(), total = sum(ss)
-  const units = ss.reduce((a,s) => a + s.items.reduce((b,i) => b + i.qty, 0), 0)
-  $('rep-total').textContent   = money(total)
-  $('rep-count').textContent   = ss.length
-  $('rep-average').textContent = money(ss.length ? total / ss.length : 0)
-  $('rep-units').textContent   = units
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const mixed    = ss.reduce((a,s) => a + (s.method==='mixed' ? s.total : 0), 0)
-  const maxPay   = Math.max(cash, transfer, mixed, 1)
-  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer],['Mixto',mixed]].map(x => `
-    <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
-    <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/maxPay*100}%"></span></div>`).join('')
-  const top = {}
-  ss.forEach(s => s.items.forEach(i => top[i.n] = (top[i.n] || 0) + i.qty))
-  const ranked = Object.entries(top).sort((a,b) => b[1]-a[1]).slice(0,6)
-  $('rep-products').innerHTML = ranked.map((x,i) =>
-    `<div class="report-row"><span>${i+1}. ${x[0]}</span><b>${x[1]} ud</b></div>`).join('')
-    || '<div class="empty">Sin ventas en este período.</div>'
-  $('reportRows').innerHTML = ss.slice().reverse().map(s => `
-    <tr>
-      <td>${s.date}</td><td>${s.time}</td>
-      <td>${s.items.map(i => i.n + ' x' + i.qty).join(', ')}</td>
-      <td>${s.method==='mixed'?'Mixto':s.method==='cash'?'Efectivo':'Transferencia'}</td>
-      <td class="td-strong">${money(s.total)}</td>
-    </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin operaciones.</td></tr>'
-
-  const cierres = await db.cierres.where({ negocio: NEGOCIO }).toArray()
-  const cierresFiltrados = cierres.filter(c => {
-    const d = new Date(c.fecha + 'T12:00:00')
-    if (p === 'all') return true
-    if (p === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    const q = Math.floor(now.getMonth() / 3)
-    return Math.floor(d.getMonth() / 3) === q && d.getFullYear() === now.getFullYear()
-  })
-  const salTotalGeneral = cierresFiltrados.reduce((a, c) => a + c.salario, 0)
-  const salMaxGeneral   = cierresFiltrados.length ? Math.max(...cierresFiltrados.map(c => c.salario)) : 0
-  $('rep-sal-total').textContent = money(salTotalGeneral)
-  $('rep-sal-dias').textContent  = cierresFiltrados.length
-  $('rep-sal-max').textContent   = money(salMaxGeneral)
-
-  const porEmpleado = {}
-  cierresFiltrados.forEach(c => {
-    if (!porEmpleado[c.empleadoId]) {
-      porEmpleado[c.empleadoId] = { nombre: c.empleadoNombre, dias: 0, totalVentas: 0, totalSalario: 0, maxVenta: 0, maxFecha: '' }
-    }
-    const e = porEmpleado[c.empleadoId]
-    e.dias++
-    e.totalVentas  += c.totalVentas
-    e.totalSalario += c.salario
-    if (c.totalVentas > e.maxVenta) { e.maxVenta = c.totalVentas; e.maxFecha = c.fecha }
-  })
-  const empArr = Object.values(porEmpleado).sort((a, b) => b.totalVentas - a.totalVentas)
-  $('rep-sal-rows').innerHTML = empArr.length
-    ? empArr.map(e => `
-        <tr>
-          <td class="td-strong">${e.nombre}</td>
-          <td>${e.dias}</td>
-          <td>${money(e.totalVentas)}</td>
-          <td class="td-green"><strong>${money(e.totalSalario)}</strong></td>
-          <td>${e.maxFecha ? money(e.maxVenta) + ' (' + e.maxFecha + ')' : '—'}</td>
-        </tr>`).join('')
-    : '<tr><td colspan="5" class="empty">Sin cierres en este período.</td></tr>'
-  $('rep-ranking').innerHTML = empArr.length
-    ? empArr.map((e, i) => `
-        <div class="report-row">
-          <span>${i + 1}. ${e.nombre}</span>
-          <div style="text-align:right">
-            <b>${money(e.totalVentas)}</b>
-            <small style="display:block;color:var(--muted)">Salario: ${money(e.totalSalario)}</small>
-          </div>
-        </div>`).join('')
-    : '<div class="empty">Sin datos en este período.</div>'
-}
-
-function download(content, name, type) {
-  const a = document.createElement('a'), url = URL.createObjectURL(new Blob([content],{type}))
-  a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url)
-}
-
-function exportReport() {
-  const ss   = periodSales()
-  const rows = ['Fecha,Hora,Productos,Método,Total', ...ss.map(s =>
-    [s.date,s.time,'"'+s.items.map(i=>i.n+' x'+i.qty).join('; ')+'"',s.method,s.total].join(','))]
-  download(rows.join('\n'), 'reporte_ventas.csv', 'text/csv'); toast('Reporte exportado')
-}
-
-// ── CIERRE DEL DÍA ─────────────────────────────────────────────────────
-function calcSalary(total) {
-  return Math.round(total * 0.04)
-}
-
-async function openCierreDia() {
-  const emp = getEmployee()
-  if (!emp) { toast('No hay sesión de empleado activa', false); return }
-  const hoy = dateISO()
-  const cierreExistente = await db.cierres.where({ negocio: NEGOCIO, empleadoId: emp.id, fecha: hoy }).first()
-  if (cierreExistente) {
-    $('cierreDiaBody').innerHTML = `
-      <div style="text-align:center;padding:16px">
-        <div class="check-circle" style="margin:0 auto 12px"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <h3 style="margin-bottom:8px">Ya cerraste tu día</h3>
-        <p style="color:var(--muted)">Fecha: ${hoy}</p>
-        <div class="stats" style="margin-top:16px;grid-template-columns:1fr 1fr">
-          <div class="stat s-green"><label>Total vendido</label><strong>${money(cierreExistente.totalVentas)}</strong></div>
-          <div class="stat s-blue"><label>Tu salario</label><strong>${money(cierreExistente.salario)} CUP</strong></div>
+      <!-- ADMIN: DASHBOARD -->
+      <section class="page" id="admin-dashboard">
+        <div class="page-head">
+          <div><h1>Resumen general</h1><p>Control del mercado y actividad del negocio.</p></div>
+          <button class="btn ghost" onclick="openClose()">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Cierre de caja
+          </button>
         </div>
-      </div>`
-    $('cierreDiaFoot').innerHTML = `<button class="btn primary full" onclick="closeModal('cierreDiaModal')">Cerrar</button>`
-    openModal('cierreDiaModal')
-    return
-  }
-  const ss       = todaySales().filter(s => s.empleadoId === emp.id)
-  const total    = sum(ss)
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const salario  = calcSalary(total)
-  $('cierreDiaBody').innerHTML = `
-    <div class="stats" style="grid-template-columns:1fr 1fr">
-      <div class="stat"><label>Ventas realizadas</label><strong>${ss.length}</strong></div>
-      <div class="stat"><label>Total vendido</label><strong>${money(total)}</strong></div>
-      <div class="stat s-green"><label>Efectivo</label><strong>${money(cash)}</strong></div>
-      <div class="stat s-blue"><label>Transferencias</label><strong>${money(transfer)}</strong></div>
-    </div>
-    <div style="margin-top:16px;padding:16px;background:var(--surface2);border-radius:12px;text-align:center">
-      <p style="color:var(--muted);margin-bottom:4px;font-size:13px">Tu salario de hoy</p>
-      <strong style="font-size:28px;color:var(--green)">${money(salario)} CUP</strong>
-      <p style="color:var(--muted);font-size:12px;margin-top:4px">Basado en ${money(total)} vendidos</p>
-    </div>`
-  $('cierreDiaFoot').innerHTML = `
-    <button class="btn" onclick="closeModal('cierreDiaModal')">Cancelar</button>
-    <button class="btn primary" onclick="confirmarCierreDia()">Confirmar cierre</button>`
-  openModal('cierreDiaModal')
-}
+        <div class="stats">
+          <div class="stat s-green"><label>Ventas de hoy</label><strong class="val-green" id="a-total">CUP 0.00</strong><div class="hint">Total registrado</div></div>
+          <div class="stat s-blue"><label>Transacciones</label><strong class="val-blue" id="a-count">0</strong><div class="hint">Operaciones del día</div></div>
+          <div class="stat"><label>Efectivo recibido</label><strong id="a-cash">CUP 0.00</strong><div class="hint">Cobros en efectivo</div></div>
+          <div class="stat s-amber"><label>Transferencias</label><strong class="val-amber" id="a-transfer">CUP 0.00</strong><div class="hint">Cobros digitales</div></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><div><h3>Ventas recientes</h3><p>Últimas operaciones del día</p></div><span class="badge purple">Hoy</span></div>
+            <div class="table-wrap"><table class="table"><thead><tr><th>Hora</th><th>Detalle</th><th>Método</th><th>Total</th></tr></thead><tbody id="recentSales"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><h3>Alertas de inventario</h3><p>Requieren atención</p></div></div>
+            <div class="card-body" id="alerts"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><div><h3>Estado general</h3></div></div>
+          <div class="card-body grid3">
+            <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Productos activos</div><strong style="font-size:24px" id="a-products">0</strong></div>
+            <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Incidencias abiertas</div><strong style="font-size:24px" id="a-issues">0</strong></div>
+            <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Valor inventario</div><strong style="font-size:24px" id="a-stockvalue">CUP 0.00</strong></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><div><h3>Salarios de hoy</h3><p>Cierres confirmados por empleados hoy</p></div></div>
+          <div class="stats" style="padding:16px 16px 0">
+            <div class="stat s-green"><label>Total salarios hoy</label><strong id="a-sal-total">CUP 0.00</strong></div>
+            <div class="stat s-blue"><label>Cierres realizados</label><strong id="a-sal-count">0</strong></div>
+            <div class="stat s-amber"><label>Empleados sin cerrar</label><strong id="a-sal-pending">0</strong></div>
+          </div>
+          <div class="card-body" id="a-sal-detail" style="margin-top:8px"></div>
+        </div>
+      </section>
 
-async function confirmarCierreDia() {
-  const emp = getEmployee()
-  if (!emp) return
-  const hoy      = dateISO()
-  const ss       = todaySales().filter(s => s.empleadoId === emp.id)
-  const total    = sum(ss)
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const salario  = calcSalary(total)
-  await db.cierres.add({
-    negocio:        NEGOCIO,
-    empleadoId:     emp.id,
-    empleadoNombre: emp.nombre,
-    fecha:          hoy,
-    totalVentas:    total,
-    cantidadVentas: ss.length,
-    salario,
-    desglose:       { cash, transfer },
-    timestamp:      Date.now()
-  })
-  await registrarAudit('Cierre de día', `${emp.nombre} · Ventas: ${money(total)} · Salario: ${money(salario)} CUP`)
-  encolar({ tipo: 'cierre_dia', empleadoId: emp.id, empleadoNombre: emp.nombre, fecha: hoy, totalVentas: total, salario, desglose: { cash, transfer } })
-  closeModal('cierreDiaModal')
-  toast('Cierre registrado — Salario: ' + money(salario) + ' CUP')
-  renderAll()
-}
+      <!-- ADMIN: INVENTARIO -->
+      <section class="page" id="admin-inventory">
+        <div class="page-head">
+          <div><h1>Inventario</h1><p>Administra productos, precios, existencias y caducidad.</p></div>
+          <button class="btn primary" onclick="openProduct()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Agregar producto
+          </button>
+        </div>
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="field search-field" id="adminSearch" placeholder="Buscar producto..." oninput="renderInventory()">
+          </div>
+          <select class="field" id="adminCat" style="width:170px" onchange="renderInventory()"><option value="">Todas las categorías</option></select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Producto</th><th>Categoría</th><th>Precio venta</th><th>Costo</th><th>Stock</th><th>Caducidad</th><th>Acciones</th></tr></thead>
+              <tbody id="inventoryRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-function openClose() { openCierreDia() }
+      <!-- ADMIN: COMPRAS -->
+      <section class="page" id="admin-purchases">
+        <div class="page-head">
+          <div><h1>Compras y facturas</h1><p>Registra entradas de mercancía y actualiza el almacén.</p></div>
+          <button class="btn primary" onclick="openPurchase()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar factura
+          </button>
+        </div>
+        <div class="stats">
+          <div class="stat"><label>Facturas</label><strong id="p-count">0</strong></div>
+          <div class="stat s-green"><label>Total comprado</label><strong id="p-total">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Proveedores</label><strong id="p-suppliers">0</strong></div>
+          <div class="stat s-amber"><label>Unidades recibidas</label><strong id="p-units">0</strong></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Historial de facturas</h3></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Factura</th><th>Proveedor</th><th>Artículos</th><th>Total</th></tr></thead><tbody id="purchaseRows"></tbody></table></div>
+        </div>
+      </section>
 
-function calcDifference(expected) {
-  const v = $('cashCount')?.value; if (!v) return
-  const d = Number(v) - expected
-  $('cashDiff').textContent = money(d)
-  $('cashDiff').style.color = Math.abs(d) < .005 ? 'var(--green)' : 'var(--red)'
-}
+      <!-- ADMIN: REPORTES -->
+      <section class="page" id="admin-reports">
+        <div class="page-head">
+          <div><h1>Reportes</h1><p>Comportamiento mensual y trimestral de ventas.</p></div>
+          <select class="field" id="reportPeriod" style="width:160px" onchange="renderReports()">
+            <option value="month">Este mes</option>
+            <option value="quarter">Este trimestre</option>
+            <option value="all">Todo el período</option>
+          </select>
+        </div>
+        <div class="stats">
+          <div class="stat s-green"><label>Ventas del período</label><strong class="val-green" id="rep-total">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Transacciones</label><strong class="val-blue" id="rep-count">0</strong></div>
+          <div class="stat"><label>Ticket promedio</label><strong id="rep-average">CUP 0.00</strong></div>
+          <div class="stat s-amber"><label>Unidades vendidas</label><strong class="val-amber" id="rep-units">0</strong></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><h3>Ventas por método de pago</h3></div>
+            <div class="card-body" id="rep-pay"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Productos más vendidos</h3></div>
+            <div class="card-body" id="rep-products"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head">
+            <h3>Detalle de ventas</h3>
+            <button class="btn ghost btn-sm" onclick="exportReport()">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar CSV
+            </button>
+          </div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Hora</th><th>Productos</th><th>Método</th><th>Total</th></tr></thead><tbody id="reportRows"></tbody></table></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3>Salarios del período</h3></div>
+          <div class="stats" style="padding:16px 16px 0">
+            <div class="stat s-green"><label>Total en salarios</label><strong id="rep-sal-total">CUP 0.00</strong></div>
+            <div class="stat s-blue"><label>Días trabajados</label><strong id="rep-sal-dias">0</strong></div>
+            <div class="stat s-amber"><label>Mayor salario individual</label><strong id="rep-sal-max">CUP 0.00</strong></div>
+          </div>
+          <div class="table-wrap" style="margin-top:14px">
+            <table class="table">
+              <thead><tr><th>Empleado</th><th>Días</th><th>Total vendido</th><th>Salario total</th><th>Mayor día</th></tr></thead>
+              <tbody id="rep-sal-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-head"><h3>Ranking de empleados</h3></div>
+          <div class="card-body" id="rep-ranking"></div>
+        </div>
+      </section>
 
-function exportClose() {
-  const ss       = todaySales(), total = sum(ss)
-  const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
-  const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const txt = `CIERRE DE CAJA\nFecha: ${dateISO()}\nVentas: ${money(total)}\nEfectivo: ${money(cash)}\nTransferencias: ${money(transfer)}\nTransacciones: ${ss.length}\n`
-  download(txt, 'cierre_' + dateISO() + '.txt', 'text/plain'); toast('Cierre exportado')
-}
+      <!-- ADMIN: INCIDENCIAS -->
+      <section class="page" id="admin-issues">
+        <div class="page-head">
+          <div><h1>Incidencias</h1><p>Problemas comunicados desde el punto de venta.</p></div>
+          <select class="field" id="issueFilter" style="width:150px" onchange="renderIssues()">
+            <option value="all">Todas</option>
+            <option value="open">Pendientes</option>
+            <option value="resolved">Resueltas</option>
+          </select>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-head"><div><h3>Historial de correcciones</h3><p>Cada cambio en ventas queda registrado con motivo y responsable</p></div></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Empleado</th><th>Venta</th><th>Motivo</th><th>Detalle</th></tr></thead><tbody id="correctionRows"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Descripción</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="issueRows"></tbody></table></div>
+        </div>
+      </section>
 
-// ── AUDITORIA ──────────────────────────────────────────────────────────
-function renderAudit() {
-  $('auditRows').innerHTML = auditLog.map(a => `
-    <tr>
-      <td class="td-muted" style="font-size:12px">${a.date}</td>
-      <td class="td-strong">${a.action}</td><td>${a.detail}</td><td>${a.origin}</td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">Sin movimientos registrados.</td></tr>'
-}
+      <!-- ADMIN: AUDITORIA -->
+      <section class="page" id="admin-audit">
+        <div class="page-head"><div><h1>Movimientos y auditoría</h1><p>Registro completo de operaciones y responsables.</p></div></div>
+        <div class="notice">Cada evento registra usuario, fecha, hora y detalle de la operación. Sincronización con servidor disponible cuando se configure la URL del webhook.</div>
+        <div class="card">
+          <div class="table-wrap"><table class="table"><thead><tr><th>Fecha y hora</th><th>Acción</th><th>Detalle</th><th>Origen</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+        </div>
+      </section>
 
-// ── EMPLEADOS ──────────────────────────────────────────────────────────
-function openEmpleadoModal(id = null) {
-  $('empleadoId').value = id || ''
-  $('empleadoNombre').value = ''
-  $('empleadoTelefono').value = ''
-  $('empleadoFechaInicio').value = ''
-  $('empleadoPin').value = ''
-  $('empleadoModalTitle').textContent = id ? 'Editar empleado' : 'Nuevo empleado'
-  if (id) {
-    db.empleados.get(id).then(e => {
-      if (!e) return
-      $('empleadoNombre').value     = e.nombre
-      $('empleadoTelefono').value   = e.telefono || ''
-      $('empleadoFechaInicio').value = e.fechaInicio || ''
-      $('empleadoPin').value        = e.pin
-    })
-  }
-  openModal('empleadoModal')
-}
+      <!-- ADMIN: EMPLEADOS -->
+      <section class="page" id="admin-empleados">
+        <div class="page-head">
+          <div><h1>Empleados</h1><p>Gestión de empleados y accesos.</p></div>
+          <button class="btn primary" onclick="openEmpleadoModal()">+ Nuevo empleado</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha inicio</th><th>PIN</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="empleadosRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-async function saveEmpleado() {
-  const nombre = $('empleadoNombre').value.trim()
-  const pin    = String($('empleadoPin').value).trim()
-  if (!nombre)               { toast('El nombre es obligatorio', false); return }
-  if (!/^\d{4}$/.test(pin)) { toast('El PIN debe ser exactamente 4 dígitos', false); return }
-  const id   = $('empleadoId').value
-  const data = {
-    negocio: NEGOCIO, nombre,
-    telefono:    $('empleadoTelefono').value.trim(),
-    fechaInicio: $('empleadoFechaInicio').value,
-    pin, activo: 1
-  }
-  if (id) {
-    await db.empleados.update(Number(id), data)
-    await registrarAudit('Empleado editado', nombre)
-    toast('Empleado actualizado')
-  } else {
-    await db.empleados.add(data)
-    await registrarAudit('Empleado creado', nombre)
-    toast('Empleado creado')
-  }
-  closeModal('empleadoModal')
-  renderEmpleados()
-}
+      <!-- EMPLEADO: VENTA -->
+      <section class="page active" id="employee-sale">
+        <div class="page-head">
+          <div><h1>Nueva venta</h1><p>Toca los productos para añadirlos al ticket.</p></div>
+        </div>
+        <div class="sale-layout">
+          <div>
+            <div class="toolbar">
+              <div class="search-wrap" style="flex:1">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="field search-field" id="saleSearch" placeholder="Buscar producto..." oninput="renderSaleProducts()">
+              </div>
+            </div>
+            <div class="tabs" id="saleCats"></div>
+            <div class="product-grid" id="saleProducts"></div>
+          </div>
+          <div class="ticket-panel">
+            <div class="ticket-head">
+              <h3>Ticket actual</h3>
+              <button class="btn ghost btn-sm" onclick="clearTicket()">Limpiar</button>
+            </div>
+            <div class="ticket-items" id="ticketItems">
+              <div class="ticket-empty">Selecciona productos del catálogo</div>
+            </div>
+            <div class="pay-section">
+              <div class="pay-label">Método de pago</div>
+              <div class="pay-opts">
+                <button class="pay-opt sel-cash" id="payOptCash" onclick="setPayMethod('cash')">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  Efectivo
+                </button>
+                <button class="pay-opt" id="payOptTransfer" onclick="setPayMethod('transfer')">
+                  <svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                  Transferencia
+                </button>
+                <button class="pay-opt" id="payOptMixed" onclick="setPayMethod('mixed')">
+                  <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Mixto
+                </button>
+              </div>
+              <div id="payFields"></div>
+            </div>
+            <div class="ticket-foot">
+              <div class="total-row">
+                <span class="total-label">Total a cobrar</span>
+                <span class="total-val" id="ticketTotal">CUP 0.00</span>
+              </div>
+              <button class="btn primary full" onclick="checkout()">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Confirmar cobro
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-async function toggleEmpleado(id) {
-  const e = await db.empleados.get(id)
-  if (!e) return
-  const nuevoEstado = e.activo ? 0 : 1
-  await db.empleados.update(id, { activo: nuevoEstado })
-  await registrarAudit(nuevoEstado ? 'Empleado reactivado' : 'Empleado desactivado', e.nombre)
-  toast(nuevoEstado ? e.nombre + ' reactivado' : e.nombre + ' desactivado')
-  renderEmpleados()
-}
+      <!-- EMPLEADO: HISTORIAL -->
+      <section class="page" id="employee-history">
+        <div class="page-head">
+          <div><h1>Mis ventas</h1><p>Revisa y corrige tus ventas del día.</p></div>
+          <button class="btn primary" onclick="openCierreDia()">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Cerrar mi día
+          </button>
+        </div>
+        <div class="stats">
+          <div class="stat s-green"><label>Ventas realizadas</label><strong id="e-count">0</strong></div>
+          <div class="stat"><label>Total vendido</label><strong id="e-total">CUP 0.00</strong></div>
+          <div class="stat"><label>Efectivo</label><strong id="e-cash">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Transferencias</label><strong id="e-transfer">CUP 0.00</strong></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Hora</th><th>Empleado / turno</th><th>Productos</th><th>Método</th><th>Total</th><th>Acción</th></tr></thead>
+              <tbody id="employeeSales"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-async function deleteEmpleado(id) {
-  const e = await db.empleados.get(id)
-  if (!e) return
-  if (!confirm('¿Eliminar a ' + e.nombre + '? Sus ventas y cierres históricos se conservan.')) return
-  await db.empleados.delete(id)
-  await registrarAudit('Empleado eliminado', e.nombre)
-  toast('Empleado eliminado')
-  renderEmpleados()
-}
+      <!-- EMPLEADO: SALARIOS -->
+      <section class="page" id="employee-salarios">
+        <div class="page-head">
+          <div><h1>Mis salarios</h1><p>Historial de cierres y salarios cobrados.</p></div>
+          <select class="field" id="salarioPeriod" style="width:160px" onchange="renderMisSalarios()">
+            <option value="month">Este mes</option>
+            <option value="quarter">Este trimestre</option>
+            <option value="all">Todo el período</option>
+          </select>
+        </div>
+        <div class="stats">
+          <div class="stat s-green"><label>Total cobrado</label><strong id="sal-total">CUP 0.00</strong></div>
+          <div class="stat s-blue"><label>Días trabajados</label><strong id="sal-dias">0</strong></div>
+          <div class="stat"><label>Mayor salario</label><strong id="sal-max">CUP 0.00</strong></div>
+          <div class="stat s-amber"><label>Total vendido</label><strong id="sal-ventas">CUP 0.00</strong></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Fecha</th><th>Ventas realizadas</th><th>Total vendido</th><th>Efectivo</th><th>Transferencias</th><th>Salario</th></tr></thead>
+              <tbody id="salariosRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-async function renderEmpleados() {
-  const lista = await db.empleados.where({ negocio: NEGOCIO }).toArray()
-  $('empleadosRows').innerHTML = lista.length
-    ? lista.map(e => `
-        <tr>
-          <td class="td-strong">${e.nombre}</td>
-          <td>${e.telefono || '—'}</td>
-          <td>${e.fechaInicio || '—'}</td>
-          <td><code>${e.pin}</code></td>
-          <td><span class="badge ${e.activo ? 'badge-green' : 'badge-red'}">${e.activo ? 'Activo' : 'Inactivo'}</span></td>
-          <td>
-            <button class="btn-sm" onclick="openEmpleadoModal(${e.id})">Editar</button>
-            <button class="btn-sm" onclick="toggleEmpleado(${e.id})">${e.activo ? 'Desactivar' : 'Reactivar'}</button>
-            <button class="btn-sm danger" onclick="deleteEmpleado(${e.id})">Eliminar</button>
-          </td>
-        </tr>`).join('')
-    : '<tr><td colspan="6" class="empty">No hay empleados registrados.</td></tr>'
-}
+      <!-- EMPLEADO: INCIDENCIAS -->
+      <section class="page" id="employee-issues">
+        <div class="page-head"><div><h1>Reportar problema</h1><p>Comunica incidencias a administración.</p></div></div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><h3>Nueva incidencia</h3></div>
+            <div class="card-body">
+              <div class="form-group"><label class="field-label">Producto</label><select class="field" id="issueProduct"></select></div>
+              <div class="form-group"><label class="field-label">Tipo de problema</label><select class="field" id="issueType"><option>Producto agotado</option><option>Precio incorrecto</option><option>Producto dañado</option><option>Problema de caducidad</option><option>Otro</option></select></div>
+              <div class="form-group"><label class="field-label">Descripción</label><textarea class="field" id="issueDesc" rows="4" placeholder="Describe brevemente lo ocurrido..."></textarea></div>
+              <button class="btn primary full" onclick="submitIssue()">
+                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Enviar incidencia
+              </button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Mis reportes</h3></div>
+            <div class="card-body" id="myIssues"><div class="empty">Todavía no has enviado incidencias.</div></div>
+          </div>
+        </div>
+      </section>
 
-// ── RENDER GENERAL ─────────────────────────────────────────────────────
-function renderAll() {
-  fillSelects()
-  if (role === 'admin') {
-    if (currentPage==='dashboard')  renderDashboard()
-    if (currentPage==='inventory')  renderInventory()
-    if (currentPage==='purchases')  renderPurchases()
-    if (currentPage==='reports')    renderReports()
-    if (currentPage==='issues')     renderIssues()
-    if (currentPage==='audit')      renderAudit()
-    if (currentPage==='empleados')  renderEmpleados()
-  } else {
-    if (currentPage==='sale')      { renderSaleCats(); renderSaleProducts(); renderTicket() }
-    if (currentPage==='history')     renderEmployeeHistory()
-    if (currentPage==='salarios')    renderMisSalarios()
-    if (currentPage==='issues')      renderMyIssues()
-  }
-}
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
 
-// ── EXPONER FUNCIONES AL HTML ──────────────────────────────────────────
-Object.assign(window, {
-  pinKey, openPinScreen, closePinScreen,
-  showRoleScreen, showAdminPin, showEmployeeList, showEmployeePin,
-  empPinKey,
-  toggleSidebar, closeSidebar,
-  openModal, closeModal,
-  showPage, switchToEmployee,
-  openProduct, saveProduct, deleteProduct,
-  addCart, cartQty, clearTicket,
-  setPayMethod, updateChange, checkout,
-  openSaleEdit, updateEditSaleTotals, saveSaleEdit, showSaleChange,
-  submitIssue, resolveIssue,
-  openPurchase, addPurchaseLine, suggestPurchasePrice, savePurchase,
-  renderInventory, renderReports, renderIssues,
-  openClose, calcDifference, exportClose, exportReport,
-  openEmpleadoModal, saveEmpleado, toggleEmpleado, deleteEmpleado, renderEmpleados,
-  openCierreDia, confirmarCierreDia,
-  renderMisSalarios,
-})
-
-// ── ARRANQUE ───────────────────────────────────────────────────────────
-;(async () => {
-  try {
-    await cargarDatos()
-  } catch (e) {
-    console.error('Error al cargar datos:', e)
-    toast('Error al cargar la base de datos', false)
-  }
-  $('today').textContent = new Date().toLocaleDateString('es', {weekday:'long', day:'numeric', month:'long'})
-  if ($('purchaseDate')) $('purchaseDate').value = dateISO()
-  buildNav(); fillSelects()
-  showRoleScreen()
-  setPayMethod('cash')
-  renderAll()
-  actualizarIndicador(navigator.onLine)
-  setTimeout(() => intentarSync(), 2000)
-  setInterval(() => { if (navigator.onLine) intentarSync() }, 30000)
-})()
-
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}))
-}
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
