@@ -523,7 +523,6 @@ function renderEmployeeHistory() {
   $('e-total').textContent    = money(sum(ss))
   $('e-cash').textContent     = money(ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0))
   $('e-transfer').textContent = money(ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0))
-  $('e-mixed').textContent    = money(ss.reduce((a,s) => a + (s.method==='mixed' ? s.total : 0), 0))
   $('employeeSales').innerHTML = ss.slice().reverse().map(s => `
     <tr>
       <td class="td-muted">${s.time}</td>
