@@ -822,9 +822,10 @@ async function renderReports() {
   $('rep-units').textContent   = units
   const cash     = ss.reduce((a,s) => a + (s.cashAmount     ?? (s.method==='cash'     ? s.total : 0)), 0)
   const transfer = ss.reduce((a,s) => a + (s.transferAmount ?? (s.method==='transfer' ? s.total : 0)), 0)
-  const mixed    = ss.reduce((a,s) => a + (s.method==='mixed' ? s.total : 0), 0)
-  const maxPay   = Math.max(cash, transfer, mixed, 1)
-  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer],['Mixto',mixed]].map(x => `
+  const maxPay   = Math.max(cash, transfer, 1)
+  $('rep-pay').innerHTML = [['Efectivo',cash],['Transferencia',transfer]].map(x => `
+  <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
+  <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/maxPay*100}%"></span></div>`).join('')
     <div class="report-row"><span>${x[0]}</span><b>${money(x[1])}</b></div>
     <div class="bar" style="margin:0 0 14px"><span style="width:${x[1]/maxPay*100}%"></span></div>`).join('')
   const top = {}
